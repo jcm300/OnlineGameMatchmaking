@@ -18,4 +18,5 @@ The Matchmaking System should allow:
     * If a match successfuly starts it's result is randomly generated and the players W/L values are updated accordingly
           
 
+We will not implement the game, but only the matchmaking, so the score of the games will be randomly generated and used to update the user ranks.
 Developed in the context of the Distributed Systems course at Minho University
