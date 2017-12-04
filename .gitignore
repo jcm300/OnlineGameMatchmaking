@@ -1,0 +1,8 @@
+*.class
+
+## macOS
+.DS_Store
+._*
+
+*.txt
+*.pdf
