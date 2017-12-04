@@ -1,5 +1,5 @@
 # OnlineGameMatchmaking
-Implementation of a Matchmaking System for an Online Game. The project should follow a [Client-Server Model][https://en.wikipedia.org/wiki/Client%E2%80%93server_model] where Server-Client communicatoins should be made via TCP sockets.
+Implementation of a Matchmaking System for an Online Game. The project should follow a [Client-Server Model](https://en.wikipedia.org/wiki/Client%E2%80%93server_model) where Server-Client communicatoins should be made via TCP sockets.
 
 The Matchmaking System should allow:
 
