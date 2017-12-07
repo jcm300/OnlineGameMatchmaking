@@ -6,3 +6,6 @@
 
 *.txt
 *.pdf
+/nbproject/*
+build.xml
+manifest.mf
