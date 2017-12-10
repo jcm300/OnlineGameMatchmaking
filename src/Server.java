@@ -23,8 +23,7 @@ class Worker implements Runnable{
 
             while(!this.skt.isClosed()){
                 inS =in.readLine();
-                out.write("NotAccepted");
-                out.newLine();
+                if(/*user verified*/) out.println("Authenticated");
             }       
             
             this.skt.shutdownInput();
