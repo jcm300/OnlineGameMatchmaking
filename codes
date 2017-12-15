@@ -1,0 +1,5 @@
+Error/Status/Confirm codes:
+Authenticated ------- confirmation of user autentication
+
+Marks:
+"$;" + username + ";" + password + ";$" ------- 
