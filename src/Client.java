@@ -21,10 +21,9 @@ public class Client {
         
         //wait for server response
         while((current = in.readLine()) != null){
-            
-            //close input and output
-            in.close();
-            out.close();
+            //safely close IO streams
+            this.socket.shutdownInput();
+            this.socket.shutdownOutput();
             
             if(current.equals("Authenticated")){
                 this.isAuth = true;

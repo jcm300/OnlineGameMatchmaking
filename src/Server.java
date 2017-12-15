@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
+import java.Map.HashMap;
 
 class Worker implements Runnable{
     private Socket skt;
@@ -37,14 +38,16 @@ class Worker implements Runnable{
 
 class Server{
     private int prt;
+    private GameData gdt;
 
     public static void main(String args[]){
+
 
     }
 
     public Server(int port){
         this.prt = port;
-        
+        this.gdt = new GameData();
     }
 
     public void run(){
@@ -59,6 +62,16 @@ class Server{
         }catch(Exception e){
             e.printStackTrace();
         }
+    }
+
+}
+
+
+class GameData{
+    private Map<String,User> users;
+
+    public GameData(){
+        this.users = new HashMap<>();
     }
 
 }
