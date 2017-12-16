@@ -1,5 +1,7 @@
 Error/Status/Confirm codes:
-Authenticated ------- confirmation of user autentication
+Authenticated -------> confirmation of user autentication
+UCreated -------> user successfully created
 
 Marks:
-"$;" + username + ";" + password + ";$" ------- 
+"$l" + username + ";" + password + "l$" ------->  login
+"$c" + username + ";" + password + ";" + email + "c$" ------->  user creation

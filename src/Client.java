@@ -17,7 +17,7 @@ public class Client {
         String current;
 
         //send username and password to the server encapsulated on server-client sintax
-        out.println("$;" + username + ";" + password + ";$");
+        out.println("$l" + username + ";" + password + "l$");
         
         //wait for server response
         while((current = in.readLine()) != null){
@@ -47,4 +47,33 @@ public class Client {
             e.printStackTrace();
         }   
     }
+
+    private void createUser(String uName, String email, String password){
+        try{
+            PrintWriter out = new PrintWriter(this.socket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(this.socket.getInputStream()));
+
+            String current;
+            StringBuilder sb = new StringBuilder();
+            sb.append("$c").append(username).append(";").append(password).append(";").append(email).append("c$");
+
+
+            //send data for user creation separated by semi-colon
+            out.println(sb.toString());
+            while((current = in.readLine()) != null){
+                //safely close IO streams
+                this.socket.shutdownInput();
+                this.socket.shutdownOutput();
+                
+                if(current.equals("UCreated")){
+                    this.isAuth = true;
+                    this.username = username;
+                }
+            }
+
+
+        }catch(Exception e){
+
+        }
+    }    
 }
