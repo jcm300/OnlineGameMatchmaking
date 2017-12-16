@@ -84,5 +84,5 @@ class GameData{
 
     public boolean userExists(String username){}
 
-
+    public List<String> getHeros(){}
 }
