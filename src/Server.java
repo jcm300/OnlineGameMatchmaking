@@ -3,11 +3,8 @@
 
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
-import java.Map.HashMap;
+import java.io.*;
+import java.util.*;
 
 class Worker implements Runnable{
     private Socket skt;
@@ -20,20 +17,20 @@ class Worker implements Runnable{
 
     private boolean verifyAuthAttempt(String s){
         boolean ret = false;
-        if(inS.charAt(1)=='$' && inS.charAt(2)=='|' && inS.charAt(inS.length()-1)=='$' && inS.charAt(inS.length()-2)=='|'){
-            ArrayList<String> aux = inS.split(';');
-                if(aux.size()==2)
-                    if(gdt.passwordMatch(aux.get(1),aux.get(2))) ret = true;
+        if(s.charAt(1)=='$' && s.charAt(2)=='|' && s.charAt(s.length()-1)=='$' && s.charAt(s.length()-2)=='|'){
+            String[] aux = s.split(";");
+                if(aux.length==2)
+                    if(gdt.passwordMatch(aux[1],aux[2])) ret = true;
         }
         return ret;
     }
 
-    private boolean verifyCreateUserAttempt(String s, ArrayList<String> l){
+    private boolean verifyCreateUserAttempt(String s){
         boolean ret = false;
-        if(inS.charAt(1)=='$' && inS.charAt(2)=='c' && inS.charAt(inS.length()-1)=='$' && inS.charAt(inS.length()-2)=='c'){
-            l = inS.split(';');
-            if(l.size()==3)
-                if(addUser(aux.get(1),aux.get(2),aux.get(3))) ret = true;
+        if(s.charAt(1)=='$' && s.charAt(2)=='c' && s.charAt(s.length()-1)=='$' && s.charAt(s.length()-2)=='c'){
+            String[] aux = s.split(";");
+            if(aux.length==3)
+                if(gdt.addUser(aux[1],aux[2],aux[3])) ret = true;
         }
         return ret;
     }
@@ -41,7 +38,7 @@ class Worker implements Runnable{
     public void run(){
         try{
             BufferedReader in = new BufferedReader(new InputStreamReader(this.skt.getInputStream()));
-            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(this.skt.getOutputStream()));
+            PrintWriter out = new PrintWriter(this.skt.getOutputStream(), true);
             String inS;
 
             while(!this.skt.isClosed()){
@@ -49,8 +46,7 @@ class Worker implements Runnable{
                 if(verifyAuthAttempt(inS)){    
                     out.println("Authenticated"); 
                 }else{
-                    ArrayList<String> aux;
-                    if(verifyCreateUserAttempt(inS,aux)){
+                    if(verifyCreateUserAttempt(inS)){
                         out.println("UCreated");
                     }
                 }
