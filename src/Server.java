@@ -5,6 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 class Worker implements Runnable{
     private Socket skt;
@@ -94,22 +95,39 @@ class Server{
 
 class GameData{
     private Map<String,User> users;
+    private ReentrantLock rlk;
 
     public GameData(){
         this.users = new HashMap<>();
     }
 
-    public void addUser(){}
+    public User getUser(String uName){
+        return this.users.get(uName).clone();
+    }
 
-    public User getUser(){}
+    public boolean addUser(String uName, String pass, String mail){
+        if(this.userExists(uName)) return false;
+        this.users.put(uName,new User(uName,pass,email));
+        return true; 
+    }
 
-    public boolean addUser(String uName, String pass, String mail){}
+    public boolean passwordMatch(String uName,String pass){
+        User aux = this.users.get(uName);
 
-    public boolean passwordMatch(String uName,String pass){}
+        if(aux != null) return aux.getPassword().equals(pass);
+        else return false;
+    }
 
-    public int getRank(String username){}
+    public int getRank(String username){
+        User aux = this.users.get(username);
 
-    public boolean userExists(String username){}
+        if(aux == null) return -1;
+        else return users.getRank();
+    }
+
+    public boolean userExists(String username){
+        return this.users.containsKey(username);
+    }
 
     public List<String> getHeros(){}
 

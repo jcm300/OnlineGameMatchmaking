@@ -20,4 +20,12 @@ public class User {
         this.password=pass;
         this.rank=0;
     }
+
+    public int getRank(){
+        return this.rank;
+    }
+
+    public String getPassword(){
+        return this.pass;
+    }
 }
