@@ -76,6 +76,8 @@ class GameData{
         this.users = new HashMap<>();
     }
 
+    public void addUser(){}
+
     public User getUser(){}
 
     public boolean passwordMatch(String uName,String pass){}
@@ -85,4 +87,6 @@ class GameData{
     public boolean userExists(String username){}
 
     public List<String> getHeros(){}
+
+
 }
