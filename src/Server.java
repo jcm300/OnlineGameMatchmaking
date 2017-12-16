@@ -18,6 +18,26 @@ class Worker implements Runnable{
         this.gdt = gdt;
     }
 
+    private boolean verifyAuthAttempt(String s){
+        boolean ret = false;
+        if(inS.charAt(1)=='$' && inS.charAt(2)=='|' && inS.charAt(inS.length()-1)=='$' && inS.charAt(inS.length()-2)=='|'){
+            ArrayList<String> aux = inS.split(';');
+                if(aux.size()==2)
+                    if(gdt.passwordMatch(aux.get(1),aux.get(2))) ret = true;
+        }
+        return ret;
+    }
+
+    private boolean verifyCreateUserAttempt(String s, ArrayList<String> l){
+        boolean ret = false;
+        if(inS.charAt(1)=='$' && inS.charAt(2)=='c' && inS.charAt(inS.length()-1)=='$' && inS.charAt(inS.length()-2)=='c'){
+            l = inS.split(';');
+            if(l.size()==3)
+                if(addUser(aux.get(1),aux.get(2),aux.get(3))) ret = true;
+        }
+        return ret;
+    }
+
     public void run(){
         try{
             BufferedReader in = new BufferedReader(new InputStreamReader(this.skt.getInputStream()));
@@ -26,7 +46,14 @@ class Worker implements Runnable{
 
             while(!this.skt.isClosed()){
                 inS =in.readLine();
-                if(/*user verified*/) out.println("Authenticated");
+                if(verifyAuthAttempt(inS)){    
+                    out.println("Authenticated"); 
+                }else{
+                    ArrayList<String> aux;
+                    if(verifyCreateUserAttempt(inS,aux)){
+                        out.println("UCreated");
+                    }
+                }
             }       
             
             this.skt.shutdownInput();
@@ -79,6 +106,8 @@ class GameData{
     public void addUser(){}
 
     public User getUser(){}
+
+    public boolean addUser(String uName, String pass, String mail){}
 
     public boolean passwordMatch(String uName,String pass){}
 
