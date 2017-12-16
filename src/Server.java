@@ -11,9 +11,11 @@ import java.Map.HashMap;
 
 class Worker implements Runnable{
     private Socket skt;
+    private GameData gdt;
 
-    public Worker(Socket skt){
+    public Worker(Socket skt, GameData gdt){
         this.skt = skt;
+        this.gdt = gdt;
     }
 
     public void run(){
@@ -56,7 +58,7 @@ class Server{
             while(true){
                 Socket skt = sSkt.accept();
 
-                Thread wrk = new Thread(new Worker(skt));
+                Thread wrk = new Thread(new Worker(skt,gdt));
                 wrk.run();
             }
         }catch(Exception e){
@@ -73,5 +75,14 @@ class GameData{
     public GameData(){
         this.users = new HashMap<>();
     }
+
+    public User getUser(){}
+
+    public boolean passwordMatch(String uName,String pass){}
+
+    public int getRank(String username){}
+
+    public boolean userExists(String username){}
+
 
 }
