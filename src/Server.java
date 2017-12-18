@@ -68,8 +68,8 @@ class Server{
     private GameData gdt;
 
     public static void main(String args[]){
-
-
+        Server mSrv = new Server(9999);
+        mSrv.run();
     }
 
     public Server(int port){
@@ -129,5 +129,5 @@ class GameData{
         return this.users.containsKey(username);
     }
 
-    public List<String> getHeros(){}
+    //public List<String> getHeros(){}
 }

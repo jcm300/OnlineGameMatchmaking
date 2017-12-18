@@ -7,6 +7,29 @@ public class Client{
     private Socket socket; //socket connected to the server
     private boolean isAuth; //the user is authenticated or not
 
+    public static void main(String args[]){
+        Client cli = new Client();
+        cli.testCli();
+    }
+
+    public Client(){
+        try{
+            this.socket=new Socket("127.0.0.1",9999);
+            this.isAuth=false;
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public void testCli(){
+        this.createUser("user1","weakpassword","user1@emailDomain.com");
+        try{
+            this.authAttempt("user1","weakpassword");
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
     //attempt to authenticate with a username and a password
     private void authAttempt(String username, String password) throws IOException{
         
