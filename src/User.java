@@ -26,6 +26,10 @@ public class User {
     }
 
     public String getPassword(){
-        return this.pass;
+        return this.password;
+    }
+
+    public User clone(){
+        return new User(this.uName,this.email,this.password);
     }
 }

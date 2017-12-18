@@ -1,6 +1,5 @@
 /*
 */
-
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.io.*;
@@ -95,7 +94,6 @@ class Server{
 
 class GameData{
     private Map<String,User> users;
-    private ReentrantLock rlk;
 
     public GameData(){
         this.users = new HashMap<>();
@@ -105,9 +103,9 @@ class GameData{
         return this.users.get(uName).clone();
     }
 
-    public boolean addUser(String uName, String pass, String mail){
-        if(this.userExists(uName)) return false;
-        this.users.put(uName,new User(uName,pass,email));
+    public synchronized boolean addUser(String uName, String pass, String mail){
+        if(!this.userExists(uName)) return false;
+        this.users.put(uName,new User(uName,pass,mail));
         return true; 
     }
 
@@ -122,7 +120,7 @@ class GameData{
         User aux = this.users.get(username);
 
         if(aux == null) return -1;
-        else return users.getRank();
+        else return aux.getRank();
     }
 
     public boolean userExists(String username){
@@ -130,6 +128,4 @@ class GameData{
     }
 
     public List<String> getHeros(){}
-
-
 }

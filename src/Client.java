@@ -2,7 +2,7 @@ import java.io.*;
 import java.net.*;
 
 //Class that each gamer will execute
-public class Client {
+public class Client{
     private String username; //username of user authenticated
     private Socket socket; //socket connected to the server
     private boolean isAuth; //the user is authenticated or not
@@ -57,7 +57,6 @@ public class Client {
             StringBuilder sb = new StringBuilder();
             sb.append("$c").append(username).append(";").append(password).append(";").append(email).append("c$");
 
-
             //send data for user creation separated by semi-colon
             out.println(sb.toString());
             while((current = in.readLine()) != null){
@@ -70,8 +69,6 @@ public class Client {
                     this.username = username;
                 }
             }
-
-
         }catch(Exception e){
 
         }
