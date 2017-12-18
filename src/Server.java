@@ -45,9 +45,11 @@ class Worker implements Runnable{
                 inS =in.readLine();
                 if(verifyAuthAttempt(inS)){    
                     out.println("Authenticated"); 
+                    System.out.println("Authenticated");
                 }else{
                     if(verifyCreateUserAttempt(inS)){
                         out.println("UCreated");
+                        System.out.println("UCreated");
                     }
                 }
             }       
