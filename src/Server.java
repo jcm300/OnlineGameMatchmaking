@@ -17,20 +17,26 @@ class Worker implements Runnable{
 
     private boolean verifyAuthAttempt(String s){
         boolean ret = false;
-        if(s.charAt(1)=='$' && s.charAt(2)=='|' && s.charAt(s.length()-1)=='$' && s.charAt(s.length()-2)=='|'){
-            String[] aux = s.split(";");
+        if(s!=null){
+            if(s.charAt(0)=='$' && s.charAt(1)=='|' && s.charAt(s.length()-1)=='$' && s.charAt(s.length()-2)=='|'){
+                s = s.substring(2, s.length()-2);
+                String[] aux = s.split(";");
                 if(aux.length==2)
-                    if(gdt.passwordMatch(aux[1],aux[2])) ret = true;
+                    if(gdt.passwordMatch(aux[0],aux[1])) ret = true;
+            }
         }
         return ret;
     }
 
     private boolean verifyCreateUserAttempt(String s){
         boolean ret = false;
-        if(s.charAt(1)=='$' && s.charAt(2)=='c' && s.charAt(s.length()-1)=='$' && s.charAt(s.length()-2)=='c'){
-            String[] aux = s.split(";");
-            if(aux.length==3)
-                if(gdt.addUser(aux[1],aux[2],aux[3])) ret = true;
+        if(s!=null){
+            if(s.charAt(0)=='$' && s.charAt(1)=='c' && s.charAt(s.length()-1)=='$' && s.charAt(s.length()-2)=='c'){
+                s = s.substring(2, s.length()-2);
+                String[] aux = s.split(";");
+                if(aux.length==3)
+                    if(gdt.addUser(aux[0],aux[1],aux[2])) ret = true;
+            }
         }
         return ret;
     }
@@ -40,16 +46,20 @@ class Worker implements Runnable{
             BufferedReader in = new BufferedReader(new InputStreamReader(this.skt.getInputStream()));
             PrintWriter out = new PrintWriter(this.skt.getOutputStream(), true);
             String inS;
-
-            while(!this.skt.isClosed()){
-                inS =in.readLine();
-                if(verifyAuthAttempt(inS)){    
+            
+            System.out.println("Connection Received");
+            
+            while((inS = in.readLine()) != null){
+                if(this.verifyAuthAttempt(inS)){    
                     out.println("Authenticated"); 
                     System.out.println("Authenticated");
                 }else{
-                    if(verifyCreateUserAttempt(inS)){
+                    if(this.verifyCreateUserAttempt(inS)){
                         out.println("UCreated");
                         System.out.println("UCreated");
+                    }else{
+                        out.println("UExists");
+                        System.out.println("UExists");
                     }
                 }
             }       
@@ -57,6 +67,7 @@ class Worker implements Runnable{
             this.skt.shutdownInput();
             this.skt.shutdownOutput();
             this.skt.close();
+            System.out.println("Connection Closed");
         }catch(Exception e){
             e.printStackTrace();
         } 
@@ -106,7 +117,7 @@ class GameData{
     }
 
     public synchronized boolean addUser(String uName, String pass, String mail){
-        if(!this.userExists(uName)) return false;
+        if(this.userExists(uName)) return false;
         this.users.put(uName,new User(uName,pass,mail));
         return true; 
     }
@@ -125,8 +136,8 @@ class GameData{
         else return aux.getRank();
     }
 
-    public boolean userExists(String username){
-        return this.users.containsKey(username);
+    public boolean userExists(String uName){
+        return this.users.containsKey(uName);
     }
 
     //public List<String> getHeros(){}

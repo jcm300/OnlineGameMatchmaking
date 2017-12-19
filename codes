@@ -1,7 +1,8 @@
 Error/Status/Confirm codes:
 Authenticated -------> confirmation of user autentication
 UCreated -------> user successfully created
+UExists -------> user already exists
 
 Marks:
-"$l" + username + ";" + password + "l$" ------->  login
+"$|" + username + ";" + password + "|$" ------->  login
 "$c" + username + ";" + password + ";" + email + "c$" ------->  user creation
