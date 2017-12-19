@@ -167,3 +167,34 @@ class GameData{
 
     //public List<String> getHeros(){}
 }
+
+class Game{
+    private ArrayList<User> team1;
+    private ArrayList<User> team2;
+    
+    public Game(ArrayList<User> t1, ArrayList<User> t2){
+        this.team1 = t1;
+        this.team2 = t2;
+    }
+
+    public void  updateRanks (ArrayList<User> t, int r){
+        int oldR;
+        for(User u: t){
+            oldR = u.getRank();
+            u.updateRank(oldR+r);
+        }
+    }
+
+    public void playGame(){
+        Random rand = new Random();
+        int result = rand.nextInt(2);
+        //if 0 team 1 win, if 1 team 2 win
+        if(result==0){
+            updateRanks(this.team1,1);
+            updateRanks(this.team2,-1);
+        }else{
+            updateRanks(this.team2,1);
+            updateRanks(this.team1,-1);
+        }
+    }
+}

@@ -1,13 +1,6 @@
 /*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
  */
 
-/**
- *
- * @author miguelq
- */
 public class User {
     private String uName;
     private String email;
@@ -19,6 +12,12 @@ public class User {
         this.email=uEmail;
         this.password=pass;
         this.rank=0;
+    }
+    
+    public void updateRank(int r){
+        if(r<0) this.rank=0;
+        else if(r>9) this.rank=9;
+             else this.rank = r;
     }
 
     public int getRank(){
