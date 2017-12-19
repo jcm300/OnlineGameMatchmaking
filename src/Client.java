@@ -92,9 +92,27 @@ public class Client{
                 }
             }
         }catch(Exception e){
-
+            e.printStackTrace();
         }
     }    
+
+    public void joinGame(){
+        if(this.isAuth){
+            String current;
+            StringBuilder sb = new StringBuilder();
+            sb.append("$j").append(this.username).append("j$");
+            try{
+                this.out.println(sb.toString());
+                while((current = this.in.readLine()) != null){
+                    if(current.equals("UQJoin")){
+                        //TODO
+                    }
+                }
+            }catch(Exception e){
+                e.printStackTrace();
+            } 
+        }
+    }
 
     public void closeClient(){
         this.isAuth = false;

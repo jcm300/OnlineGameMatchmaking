@@ -26,9 +26,20 @@ class Worker implements Runnable{
     private int MessageType(String s){
         int ret = 0;
         if(s!=null){
-            if(s.charAt(0)=='$' && s.charAt(s.length()-1)=='$'){
-                if(s.charAt(1)=='|' && s.charAt(s.length()-2)=='|') ret=1;
-                else if(s.charAt(1)=='c' && s.charAt(s.length()-2)=='c') ret=2;
+            if(s.charAt(0)=='$' && s.charAt(s.length()-1)=='$' && s.charAt(1)==s.charAt(s.length()-2)){
+                switch(s.charAt(1)){
+                    case '|':  //login
+                            ret=1;
+                            break;
+                    case 'c': //create
+                            ret=2;
+                            break;
+                    case 'j': //join
+                            ret=3;
+                            break;
+                    default:
+                            break;
+                }
             }
         }
         return ret;
@@ -55,6 +66,10 @@ class Worker implements Runnable{
                     this.out.println("UExists");
                     System.out.println("UExists");
                 }
+            }else if(type==3 && aux.length==1){
+                gdt.joinQueue(s); 
+                this.out.println("UQJoin");
+                System.out.println("UQJoin");
             }
         }   
     }
@@ -111,9 +126,11 @@ class Server{
 
 class GameData{
     private Map<String,User> users;
+    private ArrayDeque<User> joinQueue;
 
     public GameData(){
         this.users = new HashMap<>();
+        this.joinQueue = new ArrayDeque<>();
     }
 
     public User getUser(String uName){
@@ -142,6 +159,10 @@ class GameData{
 
     public boolean userExists(String uName){
         return this.users.containsKey(uName);
+    }
+
+    public void joinQueue(String uName){
+        this.joinQueue.add(this.users.get(uName));
     }
 
     //public List<String> getHeros(){}
