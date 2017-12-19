@@ -21,8 +21,7 @@ class Worker implements Runnable{
             if(s.charAt(0)=='$' && s.charAt(1)=='|' && s.charAt(s.length()-1)=='$' && s.charAt(s.length()-2)=='|'){
                 s = s.substring(2, s.length()-2);
                 String[] aux = s.split(";");
-                if(aux.length==2)
-                    if(gdt.passwordMatch(aux[0],aux[1])) ret = true;
+                ret = aux.length==2 && gdt.passwordMatch(aux[0],aux[1]);
             }
         }
         return ret;
@@ -34,8 +33,7 @@ class Worker implements Runnable{
             if(s.charAt(0)=='$' && s.charAt(1)=='c' && s.charAt(s.length()-1)=='$' && s.charAt(s.length()-2)=='c'){
                 s = s.substring(2, s.length()-2);
                 String[] aux = s.split(";");
-                if(aux.length==3)
-                    if(gdt.addUser(aux[0],aux[1],aux[2])) ret = true;
+                ret = aux.length==3 && gdt.addUser(aux[0],aux[1],aux[2]);
             }
         }
         return ret;

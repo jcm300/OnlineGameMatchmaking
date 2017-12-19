@@ -12,16 +12,7 @@ public class Client{
     public static void main(String args[]){
         Client cli = new Client();
         cli.testCli();
-        
-        cli.isAuth = false;
-        try{
-            //safely close IO streams
-            cli.socket.shutdownInput();
-            cli.socket.shutdownOutput();
-            cli.socket.close();
-        }catch(Exception e){
-            e.printStackTrace();
-        }
+        cli.closeClient();
     }
 
     public Client(){
@@ -47,7 +38,6 @@ public class Client{
 
     //attempt to authenticate with a username and a password
     private void authAttempt(String uName, String password) throws IOException{
-        
         String current;
         
         //send username and password to the server encapsulated on server-client sintax
@@ -102,4 +92,16 @@ public class Client{
 
         }
     }    
+
+    public void closeClient(){
+        this.isAuth = false;
+        try{
+            //safely close IO streams
+            this.socket.shutdownInput();
+            this.socket.shutdownOutput();
+            this.socket.close();
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
 }
