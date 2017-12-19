@@ -2,7 +2,9 @@ Error/Status/Confirm codes:
 Authenticated -------> confirmation of user autentication
 UCreated -------> user successfully created
 UExists -------> user already exists
+NotAuth -------> user not authenticated
 
 Marks:
-"$|" + username + ";" + password + "|$" ------->  login
-"$c" + username + ";" + password + ";" + email + "c$" ------->  user creation
+"$|" + username + ";" + password + "|$" ------->  login (MessageType == 1)
+"$c" + username + ";" + password + ";" + email + "c$" ------->  user creation(MessageType == 2)
+other cenario ------> (MessageType == 0)

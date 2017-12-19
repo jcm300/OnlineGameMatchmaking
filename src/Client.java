@@ -48,6 +48,9 @@ public class Client{
             if(current.equals("Authenticated")){
                 this.isAuth = true;
                 this.username = uName;
+            }else if(current.equals("NotAuth")){
+                //TODO
+                break;
             }
         }   
     }

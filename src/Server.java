@@ -9,59 +9,65 @@ import java.util.concurrent.locks.ReentrantLock;
 class Worker implements Runnable{
     private Socket skt;
     private GameData gdt;
+    private BufferedReader in;
+    private PrintWriter out;
 
     public Worker(Socket skt, GameData gdt){
         this.skt = skt;
         this.gdt = gdt;
+        try{
+            this.in = new BufferedReader(new InputStreamReader(this.skt.getInputStream()));
+            this.out = new PrintWriter(this.skt.getOutputStream(), true);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
-
-    private boolean verifyAuthAttempt(String s){
-        boolean ret = false;
+    
+    private int MessageType(String s){
+        int ret = 0;
         if(s!=null){
-            if(s.charAt(0)=='$' && s.charAt(1)=='|' && s.charAt(s.length()-1)=='$' && s.charAt(s.length()-2)=='|'){
-                s = s.substring(2, s.length()-2);
-                String[] aux = s.split(";");
-                ret = aux.length==2 && gdt.passwordMatch(aux[0],aux[1]);
+            if(s.charAt(0)=='$' && s.charAt(s.length()-1)=='$'){
+                if(s.charAt(1)=='|' && s.charAt(s.length()-2)=='|') ret=1;
+                else if(s.charAt(1)=='c' && s.charAt(s.length()-2)=='c') ret=2;
             }
         }
         return ret;
     }
-
-    private boolean verifyCreateUserAttempt(String s){
-        boolean ret = false;
-        if(s!=null){
-            if(s.charAt(0)=='$' && s.charAt(1)=='c' && s.charAt(s.length()-1)=='$' && s.charAt(s.length()-2)=='c'){
-                s = s.substring(2, s.length()-2);
-                String[] aux = s.split(";");
-                ret = aux.length==3 && gdt.addUser(aux[0],aux[1],aux[2]);
+    
+    private void parseLine(String s){
+        int type = MessageType(s);
+        if(type!=0){
+            s = s.substring(2, s.length()-2);
+            String[] aux = s.split(";");
+            if(type==1 && aux.length==2){
+                if(gdt.passwordMatch(aux[0],aux[1])){
+                    this.out.println("Authenticated"); 
+                    System.out.println("Authenticated");
+                }else{
+                    this.out.println("NotAuth");
+                    System.out.println("NotAuth");
+                }
+            }else if(type==2 && aux.length==3){
+                if(gdt.addUser(aux[0],aux[1],aux[2])){
+                    this.out.println("UCreated");
+                    System.out.println("UCreated");
+                }else{
+                    this.out.println("UExists");
+                    System.out.println("UExists");
+                }
             }
-        }
-        return ret;
+        }   
     }
 
     public void run(){
-        try{
-            BufferedReader in = new BufferedReader(new InputStreamReader(this.skt.getInputStream()));
-            PrintWriter out = new PrintWriter(this.skt.getOutputStream(), true);
-            String inS;
+        String inS;
             
-            System.out.println("Connection Received");
-            
-            while((inS = in.readLine()) != null){
-                if(this.verifyAuthAttempt(inS)){    
-                    out.println("Authenticated"); 
-                    System.out.println("Authenticated");
-                }else{
-                    if(this.verifyCreateUserAttempt(inS)){
-                        out.println("UCreated");
-                        System.out.println("UCreated");
-                    }else{
-                        out.println("UExists");
-                        System.out.println("UExists");
-                    }
-                }
+        System.out.println("Connection Received");
+        try{    
+            while((inS = this.in.readLine()) != null){
+                parseLine(inS);
             }       
-            
+        
             this.skt.shutdownInput();
             this.skt.shutdownOutput();
             this.skt.close();
