@@ -6,15 +6,16 @@ public class Client{
     private String username; //username of user authenticated
     private Socket socket; //socket connected to the server
     private boolean isAuth; //the user is authenticated or not
-    private BufferedReader in;
-    private PrintWriter out;
+    private BufferedReader in; //input from the server 
+    private PrintWriter out; // output to the server
 
     public static void main(String args[]){
         Client cli = new Client();
         cli.testCli();
         cli.closeClient();
     }
-
+    
+    //instance Client creation method
     public Client(){
         try{
             this.socket=new Socket("127.0.0.1",9999);
@@ -26,7 +27,8 @@ public class Client{
             e.printStackTrace();
         }
     }
-
+    
+    //test method
     public void testCli(){
         this.createUser("user1","weakpassword","user1@emailDomain.com");
         try{
@@ -74,11 +76,13 @@ public class Client{
         try{
             String current;
             StringBuilder sb = new StringBuilder();
+            //create message to send with username password and email
             sb.append("$c").append(uName).append(";").append(password).append(";").append(email).append("c$");
 
             //send data for user creation separated by semi-colon
             this.out.println(sb.toString());
-            
+           
+            //wait for server response
             if((current = this.in.readLine()) != null){
                 if(current.equals("UCreated")){
                     // TODO
@@ -97,9 +101,12 @@ public class Client{
         if(this.isAuth){
             String current;
             StringBuilder sb = new StringBuilder();
+            //create menssage with username
             sb.append("$j").append(this.username).append("j$");
             try{
+                //send data to server
                 this.out.println(sb.toString());
+                //wait for server response
                 if((current = this.in.readLine()) != null){
                     if(current.equals("UQJoin")){
                         //TODO

@@ -7,16 +7,19 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.Condition;
 
+//Worker wich represents one client on the server
 class Worker implements Runnable{
-    private Socket skt;
-    private GameData gdt;
-    private BufferedReader in;
-    private PrintWriter out;
-
+    private Socket skt; //socket connected to the client
+    private GameData gdt; //all data users
+    private BufferedReader in; //input from the client
+    private PrintWriter out; //output to the client
+    
+    //create and initiate a Worker
     public Worker(Socket skt, GameData gdt){
         this.skt = skt;
         this.gdt = gdt;
         try{
+            //open input and output
             this.in = new BufferedReader(new InputStreamReader(this.skt.getInputStream()));
             this.out = new PrintWriter(this.skt.getOutputStream(), true);
         }catch(Exception e){
@@ -24,9 +27,11 @@ class Worker implements Runnable{
         }
     }
     
+    //finds what type of message was sent from client
     private int MessageType(String s){
-        int ret = 0;
+        int ret = 0; //value returned if type was not found
         if(s!=null){
+            //checks if the begining and end of the message has $
             if(s.charAt(0)=='$' && s.charAt(s.length()-1)=='$' && s.charAt(1)==s.charAt(s.length()-2)){
                 switch(s.charAt(1)){
                     case '|':  //login
@@ -49,7 +54,9 @@ class Worker implements Runnable{
     private void parseLine(String s){
         int type = MessageType(s);
         if(type!=0){
+            //remove used syntax from message
             s = s.substring(2, s.length()-2);
+            //splits the message on its components
             String[] aux = s.split(";");
             if(type==1 && aux.length==2){
                 if(gdt.passwordMatch(aux[0],aux[1])){
@@ -78,11 +85,13 @@ class Worker implements Runnable{
         String inS;
             
         System.out.println("Connection Received");
-        try{    
+        try{
+            //read messages from client
             while((inS = this.in.readLine()) != null){
                 parseLine(inS);
             }       
-        
+            
+            //safely close IO streams
             this.skt.shutdownInput();
             this.skt.shutdownOutput();
             this.skt.close();
@@ -94,14 +103,15 @@ class Worker implements Runnable{
 }
 
 class Server{
-    private int prt;
-    private GameData gdt;
+    private int prt; //port server
+    private GameData gdt; //all data users
 
     public static void main(String args[]){
         Server mSrv = new Server(9999);
         mSrv.run();
     }
-
+    
+    //create a server on specific port
     public Server(int port){
         this.prt = port;
         this.gdt = new GameData();
@@ -112,7 +122,8 @@ class Server{
             ServerSocket sSkt = new ServerSocket(this.prt);
             while(true){
                 Socket skt = sSkt.accept();
-
+                
+                //create and run a thread for each client
                 Thread wrk = new Thread(new Worker(skt,gdt));
                 wrk.run();
             }
@@ -123,38 +134,43 @@ class Server{
 
 }
 
-
+//class that saves all information for the server
 class GameData{
     private Map<String,User> users;
 
     public GameData(){
         this.users = new HashMap<>();
     }
-
+    
+    //get a user with a specific username
     public User getUser(String uName){
         return this.users.get(uName).clone();
     }
-
+    
+    //add a new user
     public synchronized boolean addUser(String uName, String pass, String mail){
         if(this.userExists(uName)) return false;
         this.users.put(uName,new User(uName,pass,mail));
         return true; 
     }
-
+    
+    //checks if the username and the password match with what is stored
     public boolean passwordMatch(String uName,String pass){
         User aux = this.users.get(uName);
 
         if(aux != null) return aux.getPassword().equals(pass);
         else return false;
     }
-
+    
+    //get a rank user
     public int getRank(String username){
         User aux = this.users.get(username);
 
         if(aux == null) return -1;
         else return aux.getRank();
     }
-
+    
+    //checks if the user exists
     public boolean userExists(String uName){
         return this.users.containsKey(uName);
     }
@@ -198,15 +214,17 @@ class waitQueue{
     }
 }
 
+//class that simulate a game and update rank users
 class Game{
-    private ArrayList<User> team1;
-    private ArrayList<User> team2;
+    private ArrayList<User> team1; //team1
+    private ArrayList<User> team2; //team2
     
     public Game(ArrayList<User> t1, ArrayList<User> t2){
         this.team1 = t1;
         this.team2 = t2;
     }
-
+    
+    //update the rank users
     public void  updateRanks (ArrayList<User> t, int r){
         int oldR;
         for(User u: t){
@@ -214,7 +232,8 @@ class Game{
             u.updateRank(oldR+r);
         }
     }
-
+    
+    //simulate a game
     public void playGame(){
         Random rand = new Random();
         int result = rand.nextInt(2);
