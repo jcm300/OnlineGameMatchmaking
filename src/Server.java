@@ -5,6 +5,7 @@ import java.net.Socket;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.Condition;
 
 class Worker implements Runnable{
     private Socket skt;
@@ -67,7 +68,6 @@ class Worker implements Runnable{
                     System.out.println("UExists");
                 }
             }else if(type==3 && aux.length==1){
-                gdt.joinQueue(s); 
                 this.out.println("UQJoin");
                 System.out.println("UQJoin");
             }
@@ -126,11 +126,9 @@ class Server{
 
 class GameData{
     private Map<String,User> users;
-    private ArrayDeque<User> joinQueue;
 
     public GameData(){
         this.users = new HashMap<>();
-        this.joinQueue = new ArrayDeque<>();
     }
 
     public User getUser(String uName){
@@ -161,11 +159,43 @@ class GameData{
         return this.users.containsKey(uName);
     }
 
-    public void joinQueue(String uName){
-        this.joinQueue.add(this.users.get(uName));
-    }
-
     //public List<String> getHeros(){}
+}
+
+class waitQueue{
+    private int[] rankQueue; //array with ids of threads of users based on rank
+    private ReentrantLock rlock;
+    private Condition enoughPlayers;
+
+    public waitQueue(){
+        this.rankQueue = new int[10];
+        this.rlock =new ReentrantLock();
+        this.enoughPlayers = this.rlock.newCondition();
+    }
+   
+    public void joinQueue(int rank){
+        this.rlock.lock();
+
+        try{
+            this.rankQueue[rank] ++;
+
+            if(rank == 0)
+                while(this.rankQueue[rank]+this.rankQueue[rank+1]<10)
+                    this.enoughPlayers.await();
+            else if(rank == 9)
+                while(this.rankQueue[rank-1]+this.rankQueue[rank]<10)
+                    this.enoughPlayers.await();
+            else
+                while(this.rankQueue[rank-1] + this.rankQueue[rank] < 10 && this.rankQueue[rank]+this.rankQueue[rank+1]<10)
+                    this.enoughPlayers.await();
+
+            this.rankQueue[rank] --;
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally{
+            this.rlock.unlock();
+        }
+    }
 }
 
 class Game{

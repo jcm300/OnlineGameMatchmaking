@@ -44,29 +44,27 @@ public class Client{
         this.out.println("$|" + uName + ";" + password + "|$");
         
         //wait for server response
-        while((current = this.in.readLine()) != null && !this.isAuth){
+        if((current = this.in.readLine()) != null){
             if(current.equals("Authenticated")){
                 this.isAuth = true;
                 this.username = uName;
+                System.out.println("Authentication successful");
             }else if(current.equals("NotAuth")){
                 //TODO
-                break;
+                this.isAuth=false;
+                System.out.println("Wrong credentials");
             }
         }   
     }
 
     private void authenticate (){
-        
         String username = null, password = null;
         
         try{
-            this.socket = new Socket("127.0.0.1",9999);
-
             while(!this.isAuth /*or cancel*/){
                 //TODO: read username and password
                 authAttempt(username,password);
             }
-
         }catch(Exception e){
             e.printStackTrace();
         }   
@@ -81,14 +79,13 @@ public class Client{
             //send data for user creation separated by semi-colon
             this.out.println(sb.toString());
             
-            boolean cU = false;
-            while((current = this.in.readLine()) != null && cU){
+            if((current = this.in.readLine()) != null){
                 if(current.equals("UCreated")){
-                    //TODO
-                    cU = true;
+                    // TODO
+                    System.out.println("User Created");
                 }else if(current.equals("UExists")){
+                    System.out.println("Username already exists"); //debug
                     //TODO
-                    cU = true;
                 }
             }
         }catch(Exception e){
@@ -103,7 +100,7 @@ public class Client{
             sb.append("$j").append(this.username).append("j$");
             try{
                 this.out.println(sb.toString());
-                while((current = this.in.readLine()) != null){
+                if((current = this.in.readLine()) != null){
                     if(current.equals("UQJoin")){
                         //TODO
                     }
