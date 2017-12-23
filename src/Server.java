@@ -75,8 +75,13 @@ class Worker implements Runnable{
                     System.out.println("UExists");
                 }
             }else if(type==3 && aux.length==1){
-                this.out.println("UQJoin");
-                System.out.println("UQJoin");
+                if(this.gdt.joinQueue(aux[0])){
+                    this.out.println("UQJoin");
+                    System.out.println("UQJoin");
+                }else{ 
+                    this.out.println("Error fetching joining queue, please try again\n");
+                    System.out.println("Error fetching joining queue, please try again\n");
+                }
             }
         }   
     }
@@ -137,9 +142,11 @@ class Server{
 //class that saves all information for the server
 class GameData{
     private Map<String,User> users;
+    private WaitQueue wQueue;
 
     public GameData(){
         this.users = new HashMap<>();
+        this.wQueue = new WaitQueue();
     }
     
     //get a user with a specific username
@@ -169,6 +176,15 @@ class GameData{
         if(aux == null) return -1;
         else return aux.getRank();
     }
+
+    public boolean joinQueue(String username){
+        int rRank=this.getRank(username);
+        if(rRank==-1) return false;
+        else{
+            this.wQueue.joinQueue(rRank);
+            return true;
+        }
+    }
     
     //checks if the user exists
     public boolean userExists(String uName){
@@ -178,15 +194,15 @@ class GameData{
     //public List<String> getHeros(){}
 }
 
-class waitQueue{
-    private int[] rankQueue; //array with ids of threads of users based on rank
+class WaitQueue{
+    private int[] rankQueue;
     private ReentrantLock rlock;
-    private Condition enoughPlayers;
+    private Condition[] condLock;
 
-    public waitQueue(){
+    public WaitQueue(){
         this.rankQueue = new int[10];
         this.rlock =new ReentrantLock();
-        this.enoughPlayers = this.rlock.newCondition();
+        for(int i=0;i<10;i++) this.condLock[i] = this.rlock.newCondition();
     }
    
     public void joinQueue(int rank){
@@ -197,15 +213,16 @@ class waitQueue{
 
             if(rank == 0)
                 while(this.rankQueue[rank]+this.rankQueue[rank+1]<10)
-                    this.enoughPlayers.await();
+                    this.condLock[rank].await();
             else if(rank == 9)
                 while(this.rankQueue[rank-1]+this.rankQueue[rank]<10)
-                    this.enoughPlayers.await();
+                    this.condLock[rank].await();
             else
                 while(this.rankQueue[rank-1] + this.rankQueue[rank] < 10 && this.rankQueue[rank]+this.rankQueue[rank+1]<10)
-                    this.enoughPlayers.await();
-
+                    this.condLock[rank].await();
+            
             this.rankQueue[rank] --;
+            this.condLock[rank].signal();
         }catch(Exception e){
             e.printStackTrace();
         }finally{

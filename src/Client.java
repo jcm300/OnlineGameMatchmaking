@@ -59,7 +59,7 @@ public class Client{
         }   
     }
 
-    private void authenticate (){
+    private void authenticate(){
         String username = null, password = null;
         
         try{
