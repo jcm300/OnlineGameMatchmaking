@@ -226,9 +226,9 @@ class WaitQueue{
             else this.gameNo++;
             
             this.condLock[rank].signalAll();
-            if((rank==0 && this.rankQueue[rank]<10) || this.rankQueue[rank]+this.rankQueue[rank+1]>=10)
+            if(this.rankQueue[rank]<10 && (rank==0 || this.rankQueue[rank]+this.rankQueue[rank+1]>=10))
                 this.condLock[rank+1].signalAll();
-            else if((rank==9 && this.rankQueue[rank]<10) || this.rankQueue[rank-1] + this.rankQueue[rank]>=10)
+            else if(this.rankQueue[rank]<10 && (rank == 9 || this.rankQueue[rank-1] + this.rankQueue[rank]>=10))
                 this.condLock[rank-1].signalAll();
 
             this.rankQueue[rank] --;
