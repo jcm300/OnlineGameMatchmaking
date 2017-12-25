@@ -143,10 +143,21 @@ class Server{
 class GameData{
     private Map<String,User> users;
     private WaitQueue wQueue;
+    private Map<String,Hero> heros;
 
     public GameData(){
         this.users = new HashMap<>();
         this.wQueue = new WaitQueue();
+        this.heros = new HashMap<>();
+        this.createHeros(30);
+    }
+
+    public void createHeros(int N){
+        int i;
+        for(i=0;i<N;i++){
+            String name = "Hero"+i;
+            this.heros.put(name,new Hero(i,name));
+        }
     }
     
     //get a user with a specific username
