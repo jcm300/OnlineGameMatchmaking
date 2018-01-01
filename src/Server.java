@@ -1,11 +1,16 @@
 /*
 */
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 //Worker which represents one client on the server
 class Worker implements Runnable{
@@ -76,10 +81,11 @@ class Worker implements Runnable{
                 }
             }else if(type==3 && aux.length==1){
                 if(this.gdt.validUser(aux[0])){
+                    String uName=aux[0];
                     this.out.println("UQJoin");
                     System.out.println("UQJoin");
-                    Game g=this.gdt.joinWQueue(aux[0]);
-                    int myTeam=g.setup();
+                    Game g=this.gdt.joinWQueue(uName);
+                    int myTeam=g.setup(uName);
                     this.out.println("Joined team" +myTeam);
                     System.out.println("Joined team" +myTeam);
                 }else{ 
@@ -257,26 +263,26 @@ class WaitQueue{
             e.printStackTrace();
         }finally{
             this.rlock.unlock();
-            return this.nextGame;
         }
+        return this.nextGame;
     }
 }
 
 //class that simulate a game and update rank users
 class Game{
-    private int team1;  //no of players on team 1
-    private boolean[] heroes1; //heroes chosen by team1 TRUE else FALSE
-    private int team2;  //no of players on team 2
-    private boolean[] heroes2; //heroes chosen by team2 TRUE else FALSE
-    private ReentrantLock lock;
+    private Map<String,Integer> team1; //composition of team 1
+    private Map<String,Integer> team2; //composition of team 2
+    private ReentrantLock setupLock;
+    private ReentrantLock[] teamLock;
     private Condition allReady;
     
     public Game(){
         this.team1=this.team2=0;
-        this.heroes1 = new boolean[30];
+        this.heroes1 = new int[30];
         this.heroes2 = new boolean[30];        
-        this.lock = new ReentrantLock();
-        this.allReady=this.lock.newCondition();
+        this.setupLock = new ReentrantLock();
+        this.teamLock = new ReentrantLock[2];
+        this.allReady=this.setupLock.newCondition();
     }
     
     //update the rank users
@@ -288,29 +294,45 @@ class Game{
         }
     }
 
-    public int setup(){
+    public int setup(String uName){
         int r=-1;
         try{
-            this.lock.lock();
-            if(this.team1 < 10){
-                this.team1 ++;
+            this.setupLock.lock();
+            if(this.team1.size() < 5){
+                this.team1.put(uName,-1);
                 r=1;
             }
             else{ 
-                this.team2 ++;
+                this.team2.put(uName,-1);
                 r=2;
             }
-            if(this.team2<10) this.allReady.await();
+            if(this.team2.size()<5) this.allReady.await();
             else this.allReady.notifyAll();
         }catch(Exception e){
             e.printStackTrace();
         }finally{
-            this.lock.unlock();
-            return r;
+            this.setupLock.unlock();
         }
+        return r;
     }
 
-    public void heroPick(){
+    public boolean heroPick(String uName,int choice, int team){
+        this.teamLock[team].lock();
+        int success=false;
+        switch(team){
+            case 1:
+                if((success=!this.team1.containsValue(choice))) //check if the hero has been chosen
+                   this.team1.put(uName,choice); 
+                break;
+            case 2:
+                if((success=!this.team2.containsValue(choice))) ) //check if the hero has been chosen
+                    this.team2.put(uName,choice); 
+                break;
+            default:
+                break;
+        }
+        this.teamLock[team].unlock();
+        return success;
     }
 
     //simulate a game
@@ -319,11 +341,11 @@ class Game{
         int result = rand.nextInt(2);
         //if 0 team 1 win, if 1 team 2 win
         if(result==0){
-            updateRanks(this.team1,1);
-            updateRanks(this.team2,-1);
+            //updateRanks(this.team1,1);
+            //updateRanks(this.team2,-1);
         }else{
-            updateRanks(this.team2,1);
-            updateRanks(this.team1,-1);
+            //updateRanks(this.team2,1);
+            //updateRanks(this.team1,-1);
         }
     }
 
