@@ -7,7 +7,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.Condition;
 
-//Worker wich represents one client on the server
+//Worker which represents one client on the server
 class Worker implements Runnable{
     private Socket skt; //socket connected to the client
     private GameData gdt; //all data users
@@ -50,7 +50,7 @@ class Worker implements Runnable{
         }
         return ret;
     }
-    
+    // interprets the message recieved based on it's type
     private void parseLine(String s){
         int type = MessageType(s);
         if(type!=0){
@@ -75,9 +75,13 @@ class Worker implements Runnable{
                     System.out.println("UExists");
                 }
             }else if(type==3 && aux.length==1){
-                if(this.gdt.joinQueue(aux[0])){
+                if(this.gdt.validUser(aux[0])){
                     this.out.println("UQJoin");
                     System.out.println("UQJoin");
+                    Game g=this.wQueue.joinQueue(rRank);
+                    int myTeam=g.setup();
+                    this.out.println("Joined team" +myTeam);
+                    System.out.println("Joined team" +myTeam);
                 }else{ 
                     this.out.println("UQNotJoin");
                     System.out.println("UQNotJoin");
@@ -183,13 +187,10 @@ class GameData{
         else return aux.getRank();
     }
 
-    public boolean joinQueue(String username){
+    public boolean validUser(String username){
         int rRank=this.getRank(username);
         if(rRank==-1) return false;
-        else{
-            this.wQueue.joinQueue(rRank);
-            return true;
-        }
+        else return true;
     }
     
     //checks if the user exists
@@ -205,6 +206,7 @@ class WaitQueue{
     private ReentrantLock rlock;
     private Condition[] condLock;
     private int gameNo;                 //records no of games that have been played/started
+    private Game nextGame;              //holds the next game being held
 
     public WaitQueue(){
         this.rankQueue = new int[10];
@@ -212,9 +214,10 @@ class WaitQueue{
         this.condLock = new Condition[10];
         for(int i=0;i<10;i++) this.condLock[i] = this.rlock.newCondition();
         this.gameNo=0;
+        this.nextGame=null;
     }
    
-    public void joinQueue(int rank){
+    public Game joinQueue(int rank){
         this.rlock.lock();
         int local=this.gameNo;
 
@@ -232,7 +235,8 @@ class WaitQueue{
                     this.condLock[rank].await();
             else{
                 this.gameNo++;
-            
+                this.nextGame=new Game();
+
                 this.condLock[rank].signalAll();
                 if(this.rankQueue[rank]<10 && (rank==0 || this.rankQueue[rank]+this.rankQueue[rank+1]>=10)){
                     this.condLock[rank+1].signalAll();
@@ -244,24 +248,30 @@ class WaitQueue{
 
                 this.rankQueue[rank]=0;
             }
-
-            local = this.gameNo;
         }catch(Exception e){
             e.printStackTrace();
         }finally{
             this.rlock.unlock();
+            return this.nextGame;
         }
     }
 }
 
 //class that simulate a game and update rank users
 class Game{
-    private ArrayList<User> team1; //team1
-    private ArrayList<User> team2; //team2
+    private int team1;  //no of players on team 1
+    private boolean[] heroes1; //heroes chosen by team1 TRUE else FALSE
+    private int team2;  //no of players on team 2
+    private boolean[] heroes2; //heroes chosen by team2 TRUE else FALSE
+    private ReentrantLock lock;
+    private Condition allReady;
     
-    public Game(ArrayList<User> t1, ArrayList<User> t2){
-        this.team1 = t1;
-        this.team2 = t2;
+    public Game(){
+        this.team1=this.team2=0;
+        this.heroes1 = new boolean[30];
+        this.heroes2 = new boolean[30];        
+        this.lock = new ReentrantLock();
+        this.allReady=this.lock.newCondition();
     }
     
     //update the rank users
@@ -272,7 +282,32 @@ class Game{
             u.updateRank(oldR+r);
         }
     }
-    
+
+    public int setup(){
+        int r=-1;
+        try{
+            this.lock.lock();
+            if(this.team1 < 10){
+                this.team1 ++;
+                r=1;
+            }
+            else{ 
+                this.team2 ++;
+                r=2;
+            }
+            if(this.team2<10) this.allReady.await();
+            else this.allReady.notifyAll();
+        }catch(Exception e){
+            e.printStackTrace();
+        }finally{
+            this.lock.unlock();
+            return r;
+        }
+    }
+
+    public void heroPick(){
+    }
+
     //simulate a game
     public void playGame(){
         Random rand = new Random();
@@ -285,5 +320,9 @@ class Game{
             updateRanks(this.team2,1);
             updateRanks(this.team1,-1);
         }
+    }
+
+    public void heroChoice(){
+
     }
 }

@@ -80,7 +80,7 @@ public class Client{
                 if((current = this.in.readLine()) != null){
                     if(current.equals("UQJoin")){
                         System.out.println("Joined a game!");
-                        //TODO
+                        //TODO: loop while in game or while picking hero
                     }
                     else if(current.equals("UQNotJoin")){
                         System.out.println("Error fetching joining queue, please try again");
