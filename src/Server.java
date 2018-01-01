@@ -79,8 +79,8 @@ class Worker implements Runnable{
                     this.out.println("UQJoin");
                     System.out.println("UQJoin");
                 }else{ 
-                    this.out.println("Error fetching joining queue, please try again\n");
-                    System.out.println("Error fetching joining queue, please try again\n");
+                    this.out.println("UQNotJoin");
+                    System.out.println("UQNotJoin");
                 }
             }
         }   
@@ -113,7 +113,18 @@ class Server{
 
     public static void main(String args[]){
         Server mSrv = new Server(9999);
-        mSrv.run();
+        try{
+            ServerSocket sSkt = new ServerSocket(mSrv.prt);
+            while(true){
+                Socket skt = sSkt.accept();
+
+                //create and run a thread for each client
+                Thread wrk = new Thread(new Worker(skt,mSrv.gdt));
+                wrk.start();
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
     
     //create a server on specific port
@@ -121,22 +132,6 @@ class Server{
         this.prt = port;
         this.gdt = new GameData();
     }
-
-    public void run(){
-        try{
-            ServerSocket sSkt = new ServerSocket(this.prt);
-            while(true){
-                Socket skt = sSkt.accept();
-                
-                //create and run a thread for each client
-                Thread wrk = new Thread(new Worker(skt,gdt));
-                wrk.run();
-            }
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-    }
-
 }
 
 //class that saves all information for the server
@@ -168,7 +163,7 @@ class GameData{
     //add a new user
     public synchronized boolean addUser(String uName, String pass, String mail){
         if(this.userExists(uName)) return false;
-        this.users.put(uName,new User(uName,pass,mail));
+        this.users.put(uName,new User(uName,mail,pass));
         return true; 
     }
     
@@ -214,6 +209,7 @@ class WaitQueue{
     public WaitQueue(){
         this.rankQueue = new int[10];
         this.rlock =new ReentrantLock();
+        this.condLock = new Condition[10];
         for(int i=0;i<10;i++) this.condLock[i] = this.rlock.newCondition();
         this.gameNo=0;
     }
@@ -231,21 +227,25 @@ class WaitQueue{
             else if(rank == 9 && this.rankQueue[rank-1]+this.rankQueue[rank]<10)
                 while(local==this.gameNo)
                     this.condLock[rank].await();
-            else if(this.rankQueue[rank-1] + this.rankQueue[rank] < 10 && this.rankQueue[rank]+this.rankQueue[rank+1]<10)
+            else if(rank != 0 && rank != 9 && this.rankQueue[rank-1] + this.rankQueue[rank] < 10 && this.rankQueue[rank]+this.rankQueue[rank+1]<10)
                 while(local==this.gameNo)
                     this.condLock[rank].await();
-            else this.gameNo++;
+            else{
+                this.gameNo++;
             
-            this.condLock[rank].signalAll();
-            if(this.rankQueue[rank]<10 && (rank==0 || this.rankQueue[rank]+this.rankQueue[rank+1]>=10)){
-                this.condLock[rank+1].signalAll();
-                this.rankQueue[rank+1]=0;
-            }else if(this.rankQueue[rank]<10 && (rank == 9 || this.rankQueue[rank-1] + this.rankQueue[rank]>=10)){
-                this.condLock[rank-1].signalAll();
-                this.rankQueue[rank-1]=0;
+                this.condLock[rank].signalAll();
+                if(this.rankQueue[rank]<10 && (rank==0 || this.rankQueue[rank]+this.rankQueue[rank+1]>=10)){
+                    this.condLock[rank+1].signalAll();
+                    this.rankQueue[rank+1]=0;
+                }else if(this.rankQueue[rank]<10 && (rank == 9 || this.rankQueue[rank-1] + this.rankQueue[rank]>=10)){
+                    this.condLock[rank-1].signalAll();
+                    this.rankQueue[rank-1]=0;
+                }
+
+                this.rankQueue[rank]=0;
             }
 
-            this.rankQueue[rank]=0;
+            local = this.gameNo;
         }catch(Exception e){
             e.printStackTrace();
         }finally{

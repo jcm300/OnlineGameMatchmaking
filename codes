@@ -3,8 +3,11 @@ Authenticated -------> confirmation of user autentication
 UCreated -------> user successfully created
 UExists -------> user already exists
 NotAuth -------> user not authenticated
+UQJoin -------> user join to wait queue for room
+UQNotJoin ------> user not join to wait queue
 
 Marks:
 "$|" + username + ";" + password + "|$" ------->  login (MessageType == 1)
 "$c" + username + ";" + password + ";" + email + "c$" ------->  user creation(MessageType == 2)
+"$j" + username + "j$" ------->  join queue (MessageType == 3)
 other cenario ------> (MessageType == 0)

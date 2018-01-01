@@ -1,5 +1,6 @@
 import java.io.*;
 import java.net.*;
+import java.util.Scanner;
 
 //Class that each gamer will execute
 public class Client{
@@ -9,12 +10,6 @@ public class Client{
     private BufferedReader in; //input from the server 
     private PrintWriter out; // output to the server
 
-    public static void main(String args[]){
-        Client cli = new Client();
-        cli.testCli();
-        cli.closeClient();
-    }
-    
     //instance Client creation method
     public Client(){
         try{
@@ -28,16 +23,6 @@ public class Client{
         }
     }
     
-    //test method
-    public void testCli(){
-        this.createUser("user1","weakpassword","user1@emailDomain.com");
-        try{
-            this.authAttempt("user1","weakpassword");
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-    }
-
     //attempt to authenticate with a username and a password
     private void authAttempt(String uName, String password) throws IOException{
         String current;
@@ -52,23 +37,9 @@ public class Client{
                 this.username = uName;
                 System.out.println("Authentication successful");
             }else if(current.equals("NotAuth")){
-                //TODO
                 this.isAuth=false;
                 System.out.println("Wrong credentials");
             }
-        }   
-    }
-
-    private void authenticate(){
-        String username = null, password = null;
-        
-        try{
-            while(!this.isAuth /*or cancel*/){
-                //TODO: read username and password
-                authAttempt(username,password);
-            }
-        }catch(Exception e){
-            e.printStackTrace();
         }   
     }
 
@@ -85,11 +56,9 @@ public class Client{
             //wait for server response
             if((current = this.in.readLine()) != null){
                 if(current.equals("UCreated")){
-                    // TODO
                     System.out.println("User Created");
                 }else if(current.equals("UExists")){
-                    System.out.println("Username already exists"); //debug
-                    //TODO
+                    System.out.println("Username already exists");
                 }
             }
         }catch(Exception e){
@@ -104,12 +73,17 @@ public class Client{
             //create menssage with username
             sb.append("$j").append(this.username).append("j$");
             try{
+                System.out.println("Wait... searching for players...");
                 //send data to server
                 this.out.println(sb.toString());
                 //wait for server response
                 if((current = this.in.readLine()) != null){
                     if(current.equals("UQJoin")){
+                        System.out.println("Joined a game!");
                         //TODO
+                    }
+                    else if(current.equals("UQNotJoin")){
+                        System.out.println("Error fetching joining queue, please try again");
                     }
                 }
             }catch(Exception e){
@@ -128,5 +102,101 @@ public class Client{
         }catch(Exception e){
             e.printStackTrace();
         }
+    }
+
+    public int mainMenu(Scanner s){
+        System.out.println("Menu:");
+        System.out.println("1: Registration");
+        System.out.println("2: Authentication");
+        System.out.println("0: Close");
+        int ret;
+        try{ 
+            ret = s.nextInt();
+            if(ret>2) ret = -1;
+        }catch(Exception e){
+            ret = -1;
+        }
+        return ret;
+    }
+
+    public void registrationMenu(Scanner s){
+        String username = "",email = "", password = "";
+
+        System.out.println("Registration Menu");
+        System.out.print("Username: ");
+        username = s.next();
+        System.out.print("Email: ");
+        email = s.next();
+        System.out.print("Password: ");
+        password = s.next(); 
+        System.out.print("Write 'confirm' to confirm data: ");
+        if(s.next().equals("confirm")) this.createUser(username,email,password);       
+    }
+
+    public void authenticationMenu(Scanner s){
+        String username = "", password = "";
+        boolean flag = false;
+
+        System.out.println("Authentication Menu");
+        try{
+            while(!this.isAuth && !flag){
+                System.out.print("Username: ");
+                username = s.next();
+                if(username.equals("exit")) flag = true;
+                else{
+                    System.out.print("Password: ");
+                    password = s.next(); 
+                    this.authAttempt(username,password);
+                    if(!this.isAuth) System.out.println("Write 'exit' to cancel");
+                }       
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    public void playMenu(Scanner s){
+        System.out.println("Play Menu:");
+        int c=-1;
+        while(c!=0 && c!=1){
+            System.out.println("1: Join to a room");
+            System.out.println("0: Go back");
+            try{
+                c = s.nextInt();
+            }catch(Exception e){
+                c = -1;
+            }
+        }
+        if(c==1) this.joinGame();
+    }
+
+    public void interfaceCli(){
+        Scanner s = new Scanner(System.in);
+        int choice = -1;
+        
+        while(choice==-1){
+            choice = this.mainMenu(s);
+        
+            switch(choice){
+                case 0:
+                    break;
+                case 1:
+                    this.registrationMenu(s);
+                    choice = -1;
+                    break;
+                case 2:
+                    this.authenticationMenu(s);
+                    if(this.isAuth) this.playMenu(s);
+                    choice = -1;
+                    break;
+            }
+        }
+        s.close();
+    }
+
+    public static void main(String args[]){
+        Client cli = new Client();
+        cli.interfaceCli();
+        cli.closeClient();
     }
 }
