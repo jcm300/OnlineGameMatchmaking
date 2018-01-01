@@ -78,7 +78,7 @@ class Worker implements Runnable{
                 if(this.gdt.validUser(aux[0])){
                     this.out.println("UQJoin");
                     System.out.println("UQJoin");
-                    Game g=this.wQueue.joinQueue(rRank);
+                    Game g=this.gdt.joinWQueue(aux[0]);
                     int myTeam=g.setup();
                     this.out.println("Joined team" +myTeam);
                     System.out.println("Joined team" +myTeam);
@@ -191,6 +191,11 @@ class GameData{
         int rRank=this.getRank(username);
         if(rRank==-1) return false;
         else return true;
+    }
+
+    public Game joinWQueue(String username){
+        int rank = this.getRank(username);
+        return this.wQueue.joinQueue(rank);
     }
     
     //checks if the user exists
