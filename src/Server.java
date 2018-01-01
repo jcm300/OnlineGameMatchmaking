@@ -277,9 +277,8 @@ class Game{
     private Condition allReady;
     
     public Game(){
-        this.team1=this.team2=0;
-        this.heroes1 = new int[30];
-        this.heroes2 = new boolean[30];        
+        this.team1 = new HashMap<String,Integer>();
+        this.team2 = new HashMap<String,Integer>();        
         this.setupLock = new ReentrantLock();
         this.teamLock = new ReentrantLock[2];
         this.allReady=this.setupLock.newCondition();
@@ -316,16 +315,21 @@ class Game{
         return r;
     }
 
-    public boolean heroPick(String uName,int choice, int team){
-        this.teamLock[team].lock();
-        int success=false;
+    public boolean heroPick(String uName,int choice){
+        int team;
+        boolean success=false;
+
+        if(this.team1.containsKey(uName)) team = 0;
+        else team = 1;
+        
+        this.teamLock[1].lock();
         switch(team){
-            case 1:
-                if((success=!this.team1.containsValue(choice))) //check if the hero has been chosen
-                   this.team1.put(uName,choice); 
+            case 0:
+                if((success=!this.team1.containsValue(choice))) //check if the hero has been chosen   
+                    this.team1.put(uName,choice); 
                 break;
-            case 2:
-                if((success=!this.team2.containsValue(choice))) ) //check if the hero has been chosen
+            case 1:
+                if((success=!this.team2.containsValue(choice))) //check if the hero has been chosen
                     this.team2.put(uName,choice); 
                 break;
             default:
