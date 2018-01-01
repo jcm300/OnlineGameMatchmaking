@@ -1,6 +1,7 @@
 /*
 */
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
@@ -81,19 +82,34 @@ class Worker implements Runnable{
                 }
             }else if(type==3 && aux.length==1){
                 if(this.gdt.validUser(aux[0])){
-                    String uName=aux[0];
                     this.out.println("UQJoin");
                     System.out.println("UQJoin");
-                    Game g=this.gdt.joinWQueue(uName);
-                    int myTeam=g.setup(uName);
-                    this.out.println("Joined team" +myTeam);
-                    System.out.println("Joined team" +myTeam);
+                    this.gameRoom(aux[0]);
                 }else{ 
                     this.out.println("UQNotJoin");
                     System.out.println("UQNotJoin");
                 }
             }
         }   
+    }
+
+    public void gameRoom(String uName){
+        Game curG=this.gdt.joinWQueue(uName);
+        Thread lThread=new Thread(new Listener(this.out,curG));
+        int myTeam=curG.setup(uName);
+        String message;
+        this.out.println("Joined team" +myTeam);
+        System.out.println("Joined team" +myTeam);
+        lThread.start();
+        try{
+            while((message=this.in.readLine())!= null){
+                if(message.charAt(0)=='/'){
+
+                }else curG.addLog(message);
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }    
     }
 
     public void run(){
@@ -117,6 +133,20 @@ class Worker implements Runnable{
     }
 }
 
+
+class Listener implements Runnable{
+    private PrintWriter out; //output to the client
+    private Game chat;
+
+    public Listener(PrintWriter nOut, Game nChat){
+        this.out=nOut;
+        this.chat=nChat;
+    }
+
+    public void run(){
+        this.chat.writeLoop(out);
+    }
+}
 class Server{
     private int prt; //port server
     private GameData gdt; //all data users
@@ -268,49 +298,22 @@ class WaitQueue{
     }
 }
 
-class Log {
-    ArrayList<String> logs;
-
-    public Log(){
-        logs = new ArrayList<String>();
-    }
-
-    public synchronized void addLog(String s){
-        logs.add(s);
-        notifyAll();
-    }
-
-    public void writeLoop(PrintWriter pw){
-        int i=0;
-        String s;
-
-        try{
-            while(true){
-                synchronized(this){
-                    while(i>= logs.size()) wait();
-                    s = logs.get(i);
-                }
-                pw.println(s);
-                i++;
-            }
-        }catch(InterruptedException e){}
-    }
-}
-
 //class that simulate a game and update rank users
 class Game{
     private Map<String,Integer> team1; //composition of team 1
     private Map<String,Integer> team2; //composition of team 2
-    private ReentrantLock setupLock;
+    private ReentrantLock chatLock;
+    private Condition canISpeak;
     private ReentrantLock[] teamLock;
-    private Condition allReady;
+    private ArrayList<String> chat;
     
     public Game(){
         this.team1 = new HashMap<String,Integer>();
         this.team2 = new HashMap<String,Integer>();        
-        this.setupLock = new ReentrantLock();
+        this.chatLock = new ReentrantLock();
+        this.canISpeak=this.chatLock.newCondition();
         this.teamLock = new ReentrantLock[2];
-        this.allReady=this.setupLock.newCondition();
+        this.chat=new ArrayList<>();
     }
     
     //update the rank users
@@ -325,23 +328,44 @@ class Game{
     public int setup(String uName){
         int r=-1;
         try{
-            this.setupLock.lock();
-            if(this.team1.size() < 5){
-                this.team1.put(uName,-1);
-                r=1;
+            synchronized(this){
+                if(this.team1.size() < 5){
+                    this.team1.put(uName,-1);
+                    r=1;
+                }
+                else{ 
+                    this.team2.put(uName,-1);
+                    r=2;
+                }
+                if(this.team2.size()<5) wait();
+                else notifyAll();
             }
-            else{ 
-                this.team2.put(uName,-1);
-                r=2;
-            }
-            if(this.team2.size()<5) this.allReady.await();
-            else this.allReady.notifyAll();
         }catch(Exception e){
             e.printStackTrace();
-        }finally{
-            this.setupLock.unlock();
         }
         return r;
+    }
+
+    public void addLog(String s){
+        this.chatLock.lock();
+        this.chat.add(s);
+        this.canISpeak.signalAll();
+    }
+
+    public void writeLoop(PrintWriter pw){
+        int i=0; //no of read messages
+        String s;
+
+        try{
+            while(true){
+                this.chatLock.lock();
+                while(i>= this.chat.size()) this.canISpeak.await();
+                s = this.chat.get(i);
+                pw.println(s);
+                i++;
+                this.chatLock.unlock();
+            }
+        }catch(InterruptedException e){}
     }
 
     public boolean heroPick(String uName,int choice){
