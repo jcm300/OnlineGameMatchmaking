@@ -268,6 +268,35 @@ class WaitQueue{
     }
 }
 
+class Log {
+    ArrayList<String> logs;
+
+    public Log(){
+        logs = new ArrayList<String>();
+    }
+
+    public synchronized void addLog(String s){
+        logs.add(s);
+        notifyAll();
+    }
+
+    public void writeLoop(PrintWriter pw){
+        int i=0;
+        String s;
+
+        try{
+            while(true){
+                synchronized(this){
+                    while(i>= logs.size()) wait();
+                    s = logs.get(i);
+                }
+                pw.println(s);
+                i++;
+            }
+        }catch(InterruptedException e){}
+    }
+}
+
 //class that simulate a game and update rank users
 class Game{
     private Map<String,Integer> team1; //composition of team 1
@@ -351,9 +380,5 @@ class Game{
             //updateRanks(this.team2,1);
             //updateRanks(this.team1,-1);
         }
-    }
-
-    public void heroChoice(){
-
     }
 }
