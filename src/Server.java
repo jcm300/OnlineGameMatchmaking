@@ -211,14 +211,13 @@ class Worker implements Runnable{
                         message = message.substring(6,message.length());
                         if(this.gdt.heroExists(message))
                             curG.heroPick(uName,message);
+                        if(curG.allPicked() && !curG.getReady()){
+                            curG.stopTimer();
+                            curG.ready();
+                        }
                     }
                 }else curG.addLog(message);
-                if(curG.allPicked() && !curG.getReady()){
-                    curG.stopTimer();
-                    curG.ready();
-                }
             }
-            //TODO stop listenner
         }catch(Exception e){
             e.printStackTrace();
         }    
@@ -389,7 +388,7 @@ class Game{
         String s;
 
         try{
-            while(true){
+            while(this.result==-1){
                 this.chatLock.lock();
                 while(i>= this.chat.size()) this.canISpeak.await();
                 s = this.chat.get(i);
@@ -397,6 +396,13 @@ class Game{
                 i++;
                 this.chatLock.unlock();
             }
+            this.chatLock.lock();
+            while(i<this.chat.size()){
+                s = this.chat.get(i);
+                pw.println(s);
+                i++;
+            }
+            this.chatLock.unlock();
         }catch(InterruptedException e){}
     }
 
