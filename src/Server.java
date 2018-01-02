@@ -1,7 +1,6 @@
 /*
 */
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
@@ -10,157 +9,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
-//Worker which represents one client on the server
-class Worker implements Runnable{
-    private Socket skt; //socket connected to the client
-    private GameData gdt; //all data users
-    private BufferedReader in; //input from the client
-    private PrintWriter out; //output to the client
-    
-    //create and initiate a Worker
-    public Worker(Socket skt, GameData gdt){
-        this.skt = skt;
-        this.gdt = gdt;
-        try{
-            //open input and output
-            this.in = new BufferedReader(new InputStreamReader(this.skt.getInputStream()));
-            this.out = new PrintWriter(this.skt.getOutputStream(), true);
-        }catch(Exception e){
-            e.printStackTrace();
-        }
-    }
-    
-    //finds what type of message was sent from client
-    private int MessageType(String s){
-        int ret = 0; //value returned if type was not found
-        if(s!=null){
-            //checks if the begining and end of the message has $
-            if(s.charAt(0)=='$' && s.charAt(s.length()-1)=='$' && s.charAt(1)==s.charAt(s.length()-2)){
-                switch(s.charAt(1)){
-                    case '|':  //login
-                            ret=1;
-                            break;
-                    case 'c': //create
-                            ret=2;
-                            break;
-                    case 'j': //join
-                            ret=3;
-                            break;
-                    default:
-                            break;
-                }
-            }
-        }
-        return ret;
-    }
-    // interprets the message recieved based on it's type
-    private void parseLine(String s){
-        int type = MessageType(s);
-        if(type!=0){
-            //remove used syntax from message
-            s = s.substring(2, s.length()-2);
-            //splits the message on its components
-            String[] aux = s.split(";");
-            if(type==1 && aux.length==2){
-                if(gdt.passwordMatch(aux[0],aux[1])){
-                    this.out.println("Authenticated"); 
-                    System.out.println("Authenticated");
-                }else{
-                    this.out.println("NotAuth");
-                    System.out.println("NotAuth");
-                }
-            }else if(type==2 && aux.length==3){
-                if(gdt.addUser(aux[0],aux[1],aux[2])){
-                    this.out.println("UCreated");
-                    System.out.println("UCreated");
-                }else{
-                    this.out.println("UExists");
-                    System.out.println("UExists");
-                }
-            }else if(type==3 && aux.length==1){
-                if(this.gdt.validUser(aux[0])){
-                    this.out.println("UQJoin");
-                    System.out.println("UQJoin");
-                    this.gameRoom(aux[0]);
-                }else{ 
-                    this.out.println("UQNotJoin");
-                    System.out.println("UQNotJoin");
-                }
-            }
-        }   
-    }
-
-    public void gameRoom(String uName){
-        Game curG=this.gdt.joinWQueue(uName);
-        Thread lThread=new Thread(new Listener(this.out,curG));
-        int myTeam=curG.setup(uName);
-        String message;
-        this.out.println("Joined team" +myTeam);
-        System.out.println("Joined team" +myTeam);
-        lThread.start();
-        try{
-            while((message=this.in.readLine())!= null && !curG.getReady()){
-                if(message.charAt(0)=='/'){
-                    if(message.startsWith("pick ",1)){
-                        message = message.substring(6,message.length());
-                        if(this.gdt.heroExists(message)) {
-                            Hero h = this.gdt.getHero(message);
-                            int idH = h.getId();
-                            curG.heroPick(uName,idH);
-                            if(curG.allPicked()){
-                                curG.stopTimer();
-                                curG.ready();
-                            }
-                        }
-                    }
-                }else curG.addLog(message);
-            }
-            //TODO stop listenner
-        }catch(Exception e){
-            e.printStackTrace();
-        }    
-    }
-
-    public void run(){
-        String inS;
-            
-        System.out.println("Connection Received");
-        try{
-            //read messages from client
-            while((inS = this.in.readLine()) != null){
-                parseLine(inS);
-            }       
-            
-            //safely close IO streams
-            this.skt.shutdownInput();
-            this.skt.shutdownOutput();
-            this.skt.close();
-            System.out.println("Connection Closed");
-        }catch(Exception e){
-            e.printStackTrace();
-        } 
-    }
-}
-
-
-class Listener implements Runnable{
-    private PrintWriter out; //output to the client
-    private Game chat;
-
-    public Listener(PrintWriter nOut, Game nChat){
-        this.out=nOut;
-        this.chat=nChat;
-    }
-
-    public void run(){
-        this.chat.writeLoop(out);
-    }
-}
 class Server{
     private int prt; //port server
     private GameData gdt; //all data users
@@ -263,6 +116,151 @@ class GameData{
     }
 }
 
+//Worker which represents one client on the server
+class Worker implements Runnable{
+    private Socket skt; //socket connected to the client
+    private GameData gdt; //all data users
+    private BufferedReader in; //input from the client
+    private PrintWriter out; //output to the client
+    
+    //create and initiate a Worker
+    public Worker(Socket skt, GameData gdt){
+        this.skt = skt;
+        this.gdt = gdt;
+        try{
+            //open input and output
+            this.in = new BufferedReader(new InputStreamReader(this.skt.getInputStream()));
+            this.out = new PrintWriter(this.skt.getOutputStream(), true);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+    
+    //finds what type of message was sent from client
+    private int MessageType(String s){
+        int ret = 0; //value returned if type was not found
+        if(s!=null){
+            //checks if the begining and end of the message has $
+            if(s.charAt(0)=='$' && s.charAt(s.length()-1)=='$' && s.charAt(1)==s.charAt(s.length()-2)){
+                switch(s.charAt(1)){
+                    case '|':  //login
+                            ret=1;
+                            break;
+                    case 'c': //create
+                            ret=2;
+                            break;
+                    case 'j': //join
+                            ret=3;
+                            break;
+                    default:
+                            break;
+                }
+            }
+        }
+        return ret;
+    }
+    // interprets the message recieved based on it's type
+    private void parseLine(String s){
+        int type = MessageType(s);
+        if(type!=0){
+            //remove used syntax from message
+            s = s.substring(2, s.length()-2);
+            //splits the message on its components
+            String[] aux = s.split(";");
+            if(type==1 && aux.length==2){
+                if(gdt.passwordMatch(aux[0],aux[1])){
+                    this.out.println("Authenticated"); 
+                    System.out.println("Authenticated");
+                }else{
+                    this.out.println("NotAuth");
+                    System.out.println("NotAuth");
+                }
+            }else if(type==2 && aux.length==3){
+                if(gdt.addUser(aux[0],aux[1],aux[2])){
+                    this.out.println("UCreated");
+                    System.out.println("UCreated");
+                }else{
+                    this.out.println("UExists");
+                    System.out.println("UExists");
+                }
+            }else if(type==3 && aux.length==1){
+                if(this.gdt.validUser(aux[0])){
+                    this.out.println("UQJoin");
+                    System.out.println("UQJoin");
+                    this.gameRoom(aux[0]);
+                }else{ 
+                    this.out.println("UQNotJoin");
+                    System.out.println("UQNotJoin");
+                }
+            }
+        }   
+    }
+
+    public void gameRoom(String uName){
+        Game curG=this.gdt.joinWQueue(uName);
+        Thread lThread=new Thread(new Listener(this.out,curG));
+        int myTeam=curG.setup(uName);
+        String message;
+        this.out.println("Joined team" +myTeam);
+        System.out.println("Joined team" +myTeam);
+        lThread.start();
+        try{
+            while((message=this.in.readLine())!= null && !curG.getReady()){
+                if(message.charAt(0)=='/'){
+                    if(message.startsWith("pick ",1)){
+                        message = message.substring(6,message.length());
+                        if(this.gdt.heroExists(message))
+                            curG.heroPick(uName,message);
+                    }
+                }else curG.addLog(message);
+                if(curG.allPicked() && !curG.getReady()){
+                    curG.stopTimer();
+                    curG.ready();
+                }
+            }
+            //TODO stop listenner
+        }catch(Exception e){
+            e.printStackTrace();
+        }    
+    }
+
+    public void run(){
+        String inS;
+            
+        System.out.println("Connection Received");
+        try{
+            //read messages from client
+            while((inS = this.in.readLine()) != null){
+                this.parseLine(inS);
+            }       
+            
+            //safely close IO streams
+            this.skt.shutdownInput();
+            this.skt.shutdownOutput();
+            this.skt.close();
+            System.out.println("Connection Closed");
+        }catch(Exception e){
+            e.printStackTrace();
+        } 
+    }
+}
+
+
+class Listener implements Runnable{
+    private PrintWriter out; //output to the client
+    private Game chat;
+
+    public Listener(PrintWriter nOut, Game nChat){
+        this.out=nOut;
+        this.chat=nChat;
+    }
+
+    public void run(){
+        this.chat.writeLoop(out);
+    }
+}
+
+
 class WaitQueue{
     private int[] rankQueue;
     private ReentrantLock rlock;
@@ -333,31 +331,24 @@ class ttask extends TimerTask{
 
 //class that simulate a game and update rank users
 class Game{
-    private Map<String,Integer> team1; //composition of team 1
-    private Map<String,Integer> team2; //composition of team 2
+    private Map<String,String> team1; //composition of team 1
+    private Map<String,String> team2; //composition of team 2
     private ReentrantLock chatLock;
     private Condition canISpeak;
     private ReentrantLock[] teamLock;
     private ArrayList<String> chat;
     private Timer timer;
     private boolean readyToPlay;
+    int result;                        //0-team 1 win; 1-team 2 win
     
     public Game(){
-        this.team1 = new HashMap<String,Integer>();
-        this.team2 = new HashMap<String,Integer>();        
+        this.team1 = new HashMap<String,String>();
+        this.team2 = new HashMap<String,String>();        
         this.chatLock = new ReentrantLock();
         this.canISpeak=this.chatLock.newCondition();
         this.teamLock = new ReentrantLock[2];
         this.chat=new ArrayList<>();
-    }
-    
-    //update the rank users
-    public void  updateRanks (ArrayList<User> t, int r){
-        int oldR;
-        for(User u: t){
-            oldR = u.getRank();
-            u.updateRank(oldR+r);
-        }
+        this.result=-1;
     }
 
     public int setup(String uName){
@@ -366,16 +357,16 @@ class Game{
         try{
             synchronized(this){
                 if(this.team1.size() < 5){
-                    this.team1.put(uName,-1);
+                    this.team1.put(uName,"");
                     r=1;
                 }
                 else{ 
-                    this.team2.put(uName,-1);
+                    this.team2.put(uName,"");
                     r=2;
                 }
                 if(this.team2.size()<5) wait();
-                else notifyAll();
-                if(this.team1.size()+this.team2.size()==10){
+                else{ 
+                    notifyAll();
                     this.timer = new Timer();
                     this.timer.schedule(new ttask(this),30000); //start timer, now players have 30 seconds to pick hero
                 }
@@ -390,6 +381,7 @@ class Game{
         this.chatLock.lock();
         this.chat.add(s);
         this.canISpeak.signalAll();
+        this.chatLock.unlock();
     }
 
     public void writeLoop(PrintWriter pw){
@@ -408,7 +400,7 @@ class Game{
         }catch(InterruptedException e){}
     }
 
-    public boolean heroPick(String uName,int choice){
+    public boolean heroPick(String uName,String choice){
         int team;
         boolean success=false;
 
@@ -440,19 +432,21 @@ class Game{
     public void ready(){
         this.chatLock.lock();
         this.readyToPlay = true;
-        this.showChoices();
         this.playGame();
         this.chatLock.unlock();
     }
     
     //checks if all players picked a hero
     public boolean allPicked(){
-
+        return !(this.team1.containsValue(-1) || this.team2.containsValue(-1));
     }
 
     //show choices
     public void showChoices(){
-
+        this.addLog("Team 1:\n");
+        this.team1.entrySet().stream().peek(e->this.addLog(e.getKey()+"-"+e.getValue()+"\n"));
+        this.addLog("Team 2:\n");
+        this.team2.entrySet().stream().peek(e->this.addLog(e.getKey()+"-"+e.getValue()+"\n"));
     }
     
     //stop timer
@@ -463,14 +457,7 @@ class Game{
     //simulate a game
     public void playGame(){
         Random rand = new Random();
-        int result = rand.nextInt(2);
-        //if 0 team 1 win, if 1 team 2 win
-        if(result==0){
-            //updateRanks(this.team1,1);
-            //updateRanks(this.team2,-1);
-        }else{
-            //updateRanks(this.team2,1);
-            //updateRanks(this.team1,-1);
-        }
+        this.result = rand.nextInt(2);
+        this.showChoices();
     }
 }
