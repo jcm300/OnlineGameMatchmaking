@@ -1,24 +1,27 @@
 /*
 */
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.io.Serializable;
-import java.io.ObjectOutputStream;
-import java.io.FileOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.ObjectInputStream;
+import java.util.stream.Collectors;
 
 class Server{
     private int prt; //port server
@@ -28,16 +31,23 @@ class Server{
         Server mSrv = new Server(9999);
         try{
             ServerSocket sSkt = new ServerSocket(mSrv.prt);
-            while(true){
-                Socket skt = sSkt.accept();
-
-                //create and run a thread for each client
-                Thread wrk = new Thread(new Worker(skt,mSrv.gdt));
-                wrk.start();
+            sSkt.setSoTimeout(600000);
+            boolean close=false;
+            List<Socket> sktList=new ArrayList<>();
+            while(!close){
+                try{
+                    Socket skt = sSkt.accept();
+                    //create and run a thread for each client
+                    Thread wrk = new Thread(new Worker(skt,mSrv.gdt));
+                    wrk.start();
+                    sktList.add(skt);
+                    sktList=sktList.stream().filter(Socket::isClosed).collect(Collectors.toList()); //check if there are still open sockets
+                }catch(SocketTimeoutException e){};
+                close=sktList.size()==0;
             }
-
+            sSkt.close();
             ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File("state")));
-            oos.writeObject(this.gdt);
+            oos.writeObject(mSrv.gdt);
             oos.close();
         }catch(Exception e){
             e.printStackTrace();
@@ -51,6 +61,7 @@ class Server{
             FileInputStream fileIn = new FileInputStream("state");
             ObjectInputStream in = new ObjectInputStream(fileIn);
             this.gdt = (GameData) in.readObject();
+            in.close();
         }catch (Exception e) {
             this.gdt = new GameData();
         }   
@@ -453,22 +464,24 @@ class Game{
     //showChoices and startGame
     public void ready(){
         this.chatLock.lock();
-        this.readyToPlay = true;
         this.playGame();
+        this.readyToPlay = true;
         this.chatLock.unlock();
     }
     
     //checks if all players picked a hero
     public boolean allPicked(){
-        return !(this.team1.containsValue(-1) || this.team2.containsValue(-1));
+        return !(this.team1.containsValue("") || this.team2.containsValue(""));
     }
 
     //show choices
     public void showChoices(){
-        this.addLog("Team 1:\n");
-        this.team1.entrySet().stream().peek(e->this.addLog(e.getKey()+"-"+e.getValue()+"\n"));
-        this.addLog("Team 2:\n");
-        this.team2.entrySet().stream().peek(e->this.addLog(e.getKey()+"-"+e.getValue()+"\n"));
+        StringBuilder sb=new StringBuilder();
+        sb.append("Team 1:\n");
+        this.team1.entrySet().stream().peek(e->sb.append(e.getKey()).append("-").append(e.getValue()).append("\n"));
+        sb.append("Team 2:\n");
+        this.team2.entrySet().stream().peek(e->sb.append(e.getKey()).append("-").append(e.getValue()).append("\n"));
+        this.addLog(sb.toString());
     }
     
     //stop timer
