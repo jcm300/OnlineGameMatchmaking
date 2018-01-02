@@ -13,6 +13,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.io.Serializable;
+import java.io.ObjectOutputStream;
+import java.io.FileOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
 
 class Server{
     private int prt; //port server
@@ -29,6 +35,10 @@ class Server{
                 Thread wrk = new Thread(new Worker(skt,mSrv.gdt));
                 wrk.start();
             }
+
+            ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File("state")));
+            oos.writeObject(this.gdt);
+            oos.close();
         }catch(Exception e){
             e.printStackTrace();
         }
@@ -37,12 +47,18 @@ class Server{
     //create a server on specific port
     public Server(int port){
         this.prt = port;
-        this.gdt = new GameData();
+        try{
+            FileInputStream fileIn = new FileInputStream("state");
+            ObjectInputStream in = new ObjectInputStream(fileIn);
+            this.gdt = (GameData) in.readObject();
+        }catch (Exception e) {
+            this.gdt = new GameData();
+        }   
     }
 }
 
 //class that saves all information for the server
-class GameData{
+class GameData implements Serializable{
     private Map<String,User> users;
     private WaitQueue wQueue;
     private Map<String,Hero> heros;
