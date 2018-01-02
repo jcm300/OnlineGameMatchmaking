@@ -12,6 +12,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.Timer;
+import java.util.TimerTask;
 
 //Worker which represents one client on the server
 class Worker implements Runnable{
@@ -102,11 +104,23 @@ class Worker implements Runnable{
         System.out.println("Joined team" +myTeam);
         lThread.start();
         try{
-            while((message=this.in.readLine())!= null){
+            while((message=this.in.readLine())!= null && !curG.getReady()){
                 if(message.charAt(0)=='/'){
-
+                    if(message.startsWith("pick ",1)){
+                        message = message.substring(6,message.length());
+                        if(this.gdt.heroExists(message)) {
+                            Hero h = this.gdt.getHero(message);
+                            int idH = h.getId();
+                            curG.heroPick(uName,idH);
+                            if(curG.allPicked()){
+                                curG.stopTimer();
+                                curG.ready();
+                            }
+                        }
+                    }
                 }else curG.addLog(message);
             }
+            //TODO stop listenner
         }catch(Exception e){
             e.printStackTrace();
         }    
@@ -239,7 +253,14 @@ class GameData{
         return this.users.containsKey(uName);
     }
 
-    //public List<String> getHeros(){}
+    //checks if hero exists
+    public boolean heroExists(String hero){
+        return this.heros.containsKey(hero);
+    }
+
+    public Hero getHero(String hero){
+        return this.heros.get(hero);
+    }
 }
 
 class WaitQueue{
@@ -298,6 +319,18 @@ class WaitQueue{
     }
 }
 
+class ttask extends TimerTask{
+    private Game g;
+
+    public ttask(Game g){
+        this.g = g;
+    }
+
+    public void run(){
+        g.ready();
+    }
+}
+
 //class that simulate a game and update rank users
 class Game{
     private Map<String,Integer> team1; //composition of team 1
@@ -306,6 +339,8 @@ class Game{
     private Condition canISpeak;
     private ReentrantLock[] teamLock;
     private ArrayList<String> chat;
+    private Timer timer;
+    private boolean readyToPlay;
     
     public Game(){
         this.team1 = new HashMap<String,Integer>();
@@ -327,6 +362,7 @@ class Game{
 
     public int setup(String uName){
         int r=-1;
+        this.readyToPlay=false;
         try{
             synchronized(this){
                 if(this.team1.size() < 5){
@@ -339,6 +375,10 @@ class Game{
                 }
                 if(this.team2.size()<5) wait();
                 else notifyAll();
+                if(this.team1.size()+this.team2.size()==10){
+                    this.timer = new Timer();
+                    this.timer.schedule(new ttask(this),30000); //start timer, now players have 30 seconds to pick hero
+                }
             }
         }catch(Exception e){
             e.printStackTrace();
@@ -390,6 +430,34 @@ class Game{
         }
         this.teamLock[team].unlock();
         return success;
+    }
+
+    public boolean getReady(){
+        return this.readyToPlay;
+    }
+
+    //showChoices and startGame
+    public void ready(){
+        this.chatLock.lock();
+        this.readyToPlay = true;
+        this.showChoices();
+        this.playGame();
+        this.chatLock.unlock();
+    }
+    
+    //checks if all players picked a hero
+    public boolean allPicked(){
+
+    }
+
+    //show choices
+    public void showChoices(){
+
+    }
+    
+    //stop timer
+    public void stopTimer(){
+        this.timer.cancel();
     }
 
     //simulate a game
