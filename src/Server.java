@@ -41,7 +41,7 @@ class Server{
                     Thread wrk = new Thread(new Worker(skt,mSrv.gdt));
                     wrk.start();
                     sktList.add(skt);
-                    sktList=sktList.stream().filter(Socket::isClosed).collect(Collectors.toList()); //check if there are still open sockets
+                    sktList=sktList.stream().filter(a ->!a.isClosed()).collect(Collectors.toList()); //check if there are still open sockets
                 }catch(SocketTimeoutException e){};
                 close=sktList.size()==0;
             }
@@ -121,6 +121,12 @@ class GameData implements Serializable{
         int rRank=this.getRank(username);
         if(rRank==-1) return false;
         else return true;
+    }
+
+    public void updateRank(String username, int result, int myteam){
+        User u = this.users.get(username);
+        if(myteam==result) u.updateRank(1);
+        else u.updateRank(-1);
     }
 
     public Game joinWQueue(String username){
@@ -245,6 +251,7 @@ class Worker implements Runnable{
                     }
                 }else curG.addLog(message);
             }
+            this.gdt.updateRank(uName,curG.getResult(),myTeam);
         }catch(Exception e){
             e.printStackTrace();
         }    
@@ -365,7 +372,7 @@ class Game{
     private ArrayList<String> chat;
     private Timer timer;
     private boolean readyToPlay;
-    int result;                        //0-team 1 win; 1-team 2 win
+    int result;                        //1-team 1 win; 2-team 2 win
     
     public Game(){
         this.team1 = new HashMap<String,String>();
@@ -489,10 +496,14 @@ class Game{
         this.timer.cancel();
     }
 
+    public int getResult(){
+        return this.result;
+    }
+
     //simulate a game
     public void playGame(){
         Random rand = new Random();
-        this.result = rand.nextInt(2);
+        this.result = rand.nextInt(2)+1;
         this.showChoices();
     }
 }

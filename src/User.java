@@ -15,9 +15,9 @@ public class User {
     }
     
     public void updateRank(int r){
+        this.rank = this.rank + r;
         if(r<0) this.rank=0;
         else if(r>9) this.rank=9;
-             else this.rank = r;
     }
 
     public int getRank(){

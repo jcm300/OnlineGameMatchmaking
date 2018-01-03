@@ -83,6 +83,9 @@ public class Client{
                 if((current = this.in.readLine()) != null){
                     if(current.equals("UQJoin")){
                         System.out.println("Joined a game!");
+                        //while((current=this.in.readLine())!=null){
+                        //    System.out.println(current);
+                        //}
                         //TODO: loop while in game or while picking hero
                     }
                     else if(current.equals("UQNotJoin")){
