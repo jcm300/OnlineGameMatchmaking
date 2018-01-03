@@ -90,14 +90,13 @@ public class Client{
                 if((current = this.in.readLine()) != null){
                     if(current.equals("UQJoin")){
                         boolean stop = false;
-                        responseClient aux = new responseClient(this.out);
-                        Thread rC = new Thread(aux);
+                        Thread rC = new Thread(new ResponseClient(this.out));
                         rC.start();
-                        while((current=this.in.readLine())!=null && !stop){
+                        while(!stop && (current=this.in.readLine())!=null){
                             if(current.equals("Gstart")) stop = true;
                             else System.out.println(current);
                         }
-                        aux.shutdown();
+                        rC.interrupt();
                     }
                     else if(current.equals("UQNotJoin")){
                         System.out.println("Error fetching joining queue, please try again");
@@ -225,32 +224,26 @@ public class Client{
     public static void main(String args[]){
         Client cli = new Client();
         cli.interfaceCli();
-        cli.closeClient();
+        //cli.closeClient();
     }
 }
 
-class responseClient implements Runnable {
+class ResponseClient implements Runnable{
     private PrintWriter out;
-    private boolean stop;
 
-    public responseClient(PrintWriter out){
+    public ResponseClient(PrintWriter out){
         this.out = out;
-        this.stop = false;
-    }
-
-    public void shutdown(){
-        this.stop = true;
     }
 
     public void run(){
         String current;
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         try{
-            while((current = in.readLine())!=null && !stop){
+            while((current = in.readLine())!=null){
                 this.out.println(current);
             }
         }catch(Exception e){
             e.printStackTrace();
-        }   
+        }
     }
 }

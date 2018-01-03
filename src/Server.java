@@ -467,15 +467,13 @@ class Game{
         String s;
 
         try{
+            this.chatLock.lock();
             while(this.result==-1){
-                this.chatLock.lock();
                 while(i>= this.chat.size()) this.canISpeak.await();
                 s = this.chat.get(i);
                 pw.println(s);
                 i++;
-                this.chatLock.unlock();
             }
-            this.chatLock.lock();
             while(i<this.chat.size()){
                 s = this.chat.get(i);
                 pw.println(s);
@@ -567,5 +565,6 @@ class Game{
         Random rand = new Random();
         this.result = rand.nextInt(2)+1;
         this.showChoices();
+        this.addLog("Team " + this.result + " won\n");
     }
 }
