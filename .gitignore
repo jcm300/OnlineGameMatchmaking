@@ -4,6 +4,12 @@
 .DS_Store
 ._*
 
+
+## Latex
+**/*.aux
+**/*.log
+
+## Others
 *.txt
 *.pdf
 /nbproject/*
