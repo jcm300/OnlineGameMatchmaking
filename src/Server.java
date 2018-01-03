@@ -198,6 +198,9 @@ class Worker implements Runnable{
                     case 'd': //deauthenticate
                             ret=4;
                             break;
+                    case 'q': //quit
+                            ret=5;
+                            break;
                     default:
                             break;
                 }
@@ -248,6 +251,14 @@ class Worker implements Runnable{
             }else if(type==4 && aux.length==1){
                 this.gdt.setAuth(aux[0],false);
                 this.username=null;
+            }else if(type==5){
+                try{
+                    this.skt.shutdownInput();
+                    this.skt.shutdownOutput();
+                    this.skt.close();
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
             }
         }   
     }
@@ -287,15 +298,17 @@ class Worker implements Runnable{
         System.out.println("Connection Received");
         try{
             //read messages from client
-            while((inS = this.in.readLine()) != null){
+            while(!this.skt.isClosed() && (inS = this.in.readLine()) != null){
                 this.parseLine(inS);
             } 
             
             if(this.username!=null) this.gdt.setAuth(this.username,false);
             //safely close IO streams
-            this.skt.shutdownInput();
-            this.skt.shutdownOutput();
-            this.skt.close();
+            if(!this.skt.isClosed()){
+                this.skt.shutdownInput();
+                this.skt.shutdownOutput();
+                this.skt.close();
+            }
             System.out.println("Connection Closed");
         }catch(Exception e){
             e.printStackTrace();

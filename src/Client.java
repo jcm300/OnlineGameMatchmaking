@@ -198,6 +198,7 @@ public class Client{
         
             switch(choice){
                 case 0:
+                    this.out.println("$qq$");
                     break;
                 case 1:
                     this.registrationMenu(s);
