@@ -31,7 +31,7 @@ class Server{
         Server mSrv = new Server(9999);
         try{
             ServerSocket sSkt = new ServerSocket(mSrv.prt);
-            sSkt.setSoTimeout(600000);
+            sSkt.setSoTimeout(10000);
             boolean close=false;
             List<Socket> sktList=new ArrayList<>();
             while(!close){

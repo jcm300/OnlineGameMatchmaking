@@ -9,8 +9,8 @@
 
 
 # Server
-- [ ] User creation
-- [ ] User auth
+- [x] User creation
+- [x] User auth
 
 
 # User
