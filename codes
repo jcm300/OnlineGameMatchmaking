@@ -10,4 +10,4 @@ Marks:
 "$|" + username + ";" + password + "|$" ------->  login (MessageType == 1)
 "$c" + username + ";" + password + ";" + email + "c$" ------->  user creation(MessageType == 2)
 "$j" + username + "j$" ------->  join queue (MessageType == 3)
-other cenario ------> (MessageType == 0)
+$qq$ ------> (MessageType == 0)

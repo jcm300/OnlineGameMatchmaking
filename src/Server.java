@@ -185,6 +185,9 @@ class Worker implements Runnable{
                     case 'j': //join
                             ret=3;
                             break;
+                    case 'q': //quit
+                            ret=4;
+                            break;
                     default:
                             break;
                 }
@@ -225,6 +228,10 @@ class Worker implements Runnable{
                     this.out.println("UQNotJoin");
                     System.out.println("UQNotJoin");
                 }
+            }else if(type==4){
+                this.skt.shutdownInput();
+                this.skt.shutdownOutput();
+                this.skt.close();
             }
         }   
     }
@@ -264,14 +271,16 @@ class Worker implements Runnable{
         System.out.println("Connection Received");
         try{
             //read messages from client
-            while((inS = this.in.readLine()) != null){
+            while(!this.skt.isClosed() && (inS = this.in.readLine()) != null){
                 this.parseLine(inS);
             }       
             
             //safely close IO streams
-            this.skt.shutdownInput();
-            this.skt.shutdownOutput();
-            this.skt.close();
+            if(!this.skt.isClosed()){
+                this.skt.shutdownInput();
+                this.skt.shutdownOutput();
+                this.skt.close();
+            }
             System.out.println("Connection Closed");
         }catch(Exception e){
             e.printStackTrace();
