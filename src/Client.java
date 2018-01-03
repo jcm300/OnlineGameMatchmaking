@@ -4,6 +4,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 
 //Class that each gamer will execute
 public class Client{
@@ -90,15 +92,15 @@ public class Client{
                 if((current = this.in.readLine()) != null){
                     if(current.equals("UQJoin")){
                         boolean stop = false;
-                        Thread rC = new Thread(new ResponseClient(this.out));
+                        AtomicBoolean stopThread = new AtomicBoolean(false);
+                        Thread rC = new Thread(new ResponseClient(this.out, stopThread));
                         rC.start();
                         while(!stop && (current=this.in.readLine())!=null){
                             if(current.equals("Gstart")) stop = true;
                             else System.out.println(current);
                         }
-                        rC.interrupt();
-                    }
-                    else if(current.equals("UQNotJoin")){
+                        stopThread.set(true);
+                    }else if(current.equals("UQNotJoin")){
                         System.out.println("Error fetching joining queue, please try again");
                     }
                 }
@@ -128,10 +130,10 @@ public class Client{
         int ret;
         try{ 
             ret = s.nextInt();
+            s.nextLine();
             if(ret>2) ret = -1;
         }catch(Exception e){
             ret = -1;
-            s.next();
         }
         return ret;
     }
@@ -181,9 +183,9 @@ public class Client{
                 System.out.println("0: Go back");
                 try{
                     c = s.nextInt();
+                    s.nextLine();
                 }catch(Exception e){
                     c = -1;
-                    s.next();
                 }
             }
             if(c==1){
@@ -230,16 +232,18 @@ public class Client{
 
 class ResponseClient implements Runnable{
     private PrintWriter out;
+    private AtomicBoolean stop;
 
-    public ResponseClient(PrintWriter out){
+    public ResponseClient(PrintWriter out, AtomicBoolean stopP){
         this.out = out;
+        this.stop = stopP;
     }
 
     public void run(){
         String current;
         BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         try{
-            while((current = in.readLine())!=null){
+            while(!this.stop.get() && (current = in.readLine())!=null){
                 this.out.println(current);
             }
         }catch(Exception e){
