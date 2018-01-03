@@ -229,9 +229,13 @@ class Worker implements Runnable{
                     System.out.println("UQNotJoin");
                 }
             }else if(type==4){
-                this.skt.shutdownInput();
-                this.skt.shutdownOutput();
-                this.skt.close();
+                try{
+                    this.skt.shutdownInput();
+                    this.skt.shutdownOutput();
+                    this.skt.close();
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
             }
         }   
     }
