@@ -71,7 +71,7 @@ class Server{
 //class that saves all information for the server
 class GameData implements Serializable{
     private Map<String,User> users;
-    private WaitQueue wQueue;
+    private transient WaitQueue wQueue;
     private Map<String,Hero> heros;
 
     public GameData(){

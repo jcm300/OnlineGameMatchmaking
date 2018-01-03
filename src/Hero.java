@@ -1,4 +1,6 @@
-public class Hero{
+import java.io.Serializable;
+
+public class Hero implements Serializable{
     private int id;
     private String name;
 

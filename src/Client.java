@@ -82,14 +82,13 @@ public class Client{
                 //wait for server response
                 if((current = this.in.readLine()) != null){
                     if(current.equals("UQJoin")){
-                        System.out.println("Joined a game!");
                         boolean stop = false;
                         responseClient aux = new responseClient(this.out);
                         Thread rC = new Thread(aux);
                         rC.start();
                         while((current=this.in.readLine())!=null && !stop){
                             if(current.equals("Gstart")) stop = true;
-                            System.out.println(current);
+                            else System.out.println(current);
                         }
                         aux.shutdown();
                     }
@@ -126,6 +125,7 @@ public class Client{
             if(ret>2) ret = -1;
         }catch(Exception e){
             ret = -1;
+            s.next();
         }
         return ret;
     }
@@ -176,6 +176,7 @@ public class Client{
                 c = s.nextInt();
             }catch(Exception e){
                 c = -1;
+                s.next();
             }
         }
         if(c==1) this.joinGame();
@@ -197,7 +198,10 @@ public class Client{
                     break;
                 case 2:
                     this.authenticationMenu(s);
-                    if(this.isAuth) this.playMenu(s);
+                    if(this.isAuth){
+                        this.playMenu(s);
+                        this.isAuth = false;
+                    }
                     choice = -1;
                     break;
             }
