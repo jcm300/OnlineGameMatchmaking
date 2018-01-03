@@ -232,7 +232,7 @@ class Worker implements Runnable{
     public void gameRoom(String uName){
         Game curG=this.gdt.joinWQueue(uName);
         Thread lThread=new Thread(new Listener(this.out,curG));
-        int myTeam=curG.setup(uName);
+        int myTeam=curG.setup(uName,this.gdt.getRank(uName));
         String message;
         this.out.println("Joined team" +myTeam);
         System.out.println("Joined team" +myTeam);
@@ -251,6 +251,7 @@ class Worker implements Runnable{
                     }
                 }else curG.addLog(message);
             }
+            this.out.println("Gstart"); //stop play zone in client
             this.gdt.updateRank(uName,curG.getResult(),myTeam);
         }catch(Exception e){
             e.printStackTrace();
@@ -373,6 +374,7 @@ class Game{
     private Timer timer;
     private boolean readyToPlay;
     int result;                        //1-team 1 win; 2-team 2 win
+    int rankTeam1,rankTeam2;
     
     public Game(){
         this.team1 = new HashMap<String,String>();
@@ -382,19 +384,22 @@ class Game{
         this.teamLock = new ReentrantLock[2];
         this.chat=new ArrayList<>();
         this.result=-1;
+        this.rankTeam1 = this.rankTeam2 = 0;
     }
 
-    public int setup(String uName){
+    public int setup(String uName, int rank){
         int r=-1;
         this.readyToPlay=false;
         try{
             synchronized(this){
-                if(this.team1.size() < 5){
+                if(this.team1.size() < 5 && this.rankTeam1<this.rankTeam2){
                     this.team1.put(uName,"");
+                    this.rankTeam1 = this.rankTeam1 + rank;
                     r=1;
                 }
                 else{ 
                     this.team2.put(uName,"");
+                    this.rankTeam2 = this.rankTeam2 + rank;
                     r=2;
                 }
                 if(this.team2.size()<5) wait();

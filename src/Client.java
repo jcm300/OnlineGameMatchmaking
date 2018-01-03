@@ -83,10 +83,15 @@ public class Client{
                 if((current = this.in.readLine()) != null){
                     if(current.equals("UQJoin")){
                         System.out.println("Joined a game!");
-                        //while((current=this.in.readLine())!=null){
-                        //    System.out.println(current);
-                        //}
-                        //TODO: loop while in game or while picking hero
+                        boolean stop = false;
+                        responseClient aux = new responseClient(this.out);
+                        Thread rC = new Thread(aux);
+                        rC.start();
+                        while((current=this.in.readLine())!=null && !stop){
+                            if(current.equals("Gstart")) stop = true;
+                            System.out.println(current);
+                        }
+                        aux.shutdown();
                     }
                     else if(current.equals("UQNotJoin")){
                         System.out.println("Error fetching joining queue, please try again");
@@ -204,5 +209,31 @@ public class Client{
         Client cli = new Client();
         cli.interfaceCli();
         cli.closeClient();
+    }
+}
+
+class responseClient implements Runnable {
+    private PrintWriter out;
+    private boolean stop;
+
+    public responseClient(PrintWriter out){
+        this.out = out;
+        this.stop = false;
+    }
+
+    public void shutdown(){
+        this.stop = true;
+    }
+
+    public void run(){
+        String current;
+        Scanner s = new Scanner(System.in);
+        try{
+            while((current = s.next())!=null && !stop){
+                this.out.println(current);
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }   
     }
 }
