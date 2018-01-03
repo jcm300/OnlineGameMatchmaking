@@ -272,8 +272,8 @@ class Worker implements Runnable{
                     if(message.startsWith("pick ",1)){
                         message = message.substring(6,message.length());
                         if(this.gdt.heroExists(message)){
-                            curG.heroPick(uName,message);
-                            curG.addLog(message + " picked on " + myTeam);
+                            if(curG.heroPick(uName,message)) 
+                                curG.addLog(message + " picked on Team " + myTeam);
                             if(curG.allPicked() && !curG.getReady()){
                                 curG.stopTimer();
                                 curG.ready();
@@ -282,7 +282,7 @@ class Worker implements Runnable{
                     }   
                 }else curG.addLog(message);
             }
-            this.out.println("Gstart"); //stop play zone in client
+            //this.out.println("Gstart"); //stop play zone in client
             this.gdt.updateRank(uName,curG.getResult(),myTeam);
         }catch(Exception e){
             e.printStackTrace();
@@ -394,7 +394,8 @@ class ttask extends TimerTask{
     }
 
     public void run(){
-        g.ready();
+        g.setTimeEnded(true);
+        this.cancel();
     }
 }
 
@@ -408,8 +409,9 @@ class Game{
     private ArrayList<String> chat;
     private Timer timer;
     private boolean readyToPlay;
-    int result;                        //1-team 1 win; 2-team 2 win
-    int rankTeam1,rankTeam2;
+    private int result;                        //1-team 1 win; 2-team 2 win
+    private int rankTeam1,rankTeam2;
+    private boolean timeEnded;
     
     public Game(){
         this.team1 = new HashMap<String,String>();
@@ -417,14 +419,17 @@ class Game{
         this.chatLock = new ReentrantLock();
         this.canISpeak=this.chatLock.newCondition();
         this.teamLock = new ReentrantLock[2];
+        this.teamLock[0]=new ReentrantLock();
+        this.teamLock[1]=new ReentrantLock();
         this.chat=new ArrayList<>();
         this.result=-1;
         this.rankTeam1 = this.rankTeam2 = 0;
+        this.timeEnded = false;
+        this.readyToPlay = false;
     }
 
     public int setup(String uName, int rank){
         int r=-1;
-        this.readyToPlay=false;
         try{
             synchronized(this){
                 if(this.team1.size() < 5 && this.rankTeam1<this.rankTeam2){
@@ -477,25 +482,30 @@ class Game{
                 i++;
             }
             this.chatLock.unlock();
+            pw.println("Gstart");
         }catch(InterruptedException e){}
     }
 
     public boolean heroPick(String uName,String choice){
         int team;
         boolean success=false;
-
+        
         if(this.team1.containsKey(uName)) team = 0;
         else team = 1;
         
         this.teamLock[team].lock();
         switch(team){
             case 0:
-                if((success=!this.team1.containsValue(choice))) //check if the hero has been chosen   
-                    this.team1.put(uName,choice); 
+                if((this.team1.get(uName).equals("") && this.timeEnded) || (!this.timeEnded)){
+                    if((success=!this.team1.containsValue(choice))) //check if the hero has been chosen   
+                        this.team1.put(uName,choice); 
+                }
                 break;
             case 1:
-                if((success=!this.team2.containsValue(choice))) //check if the hero has been chosen
-                    this.team2.put(uName,choice); 
+                if((this.team2.get(uName).equals("") && this.timeEnded) || (!this.timeEnded)){
+                    if((success=!this.team2.containsValue(choice))) //check if the hero has been chosen
+                        this.team2.put(uName,choice); 
+                }
                 break;
             default:
                 break;
@@ -525,9 +535,13 @@ class Game{
     public void showChoices(){
         StringBuilder sb=new StringBuilder();
         sb.append("Team 1:\n");
-        this.team1.entrySet().stream().peek(e->sb.append(e.getKey()).append("-").append(e.getValue()).append("\n"));
+        for(Map.Entry<String,String> e :this.team1.entrySet()){
+            sb.append(e.getKey()).append("-").append(e.getValue()).append("\n");
+        }
         sb.append("Team 2:\n");
-        this.team2.entrySet().stream().peek(e->sb.append(e.getKey()).append("-").append(e.getValue()).append("\n"));
+        for(Map.Entry<String,String> e :this.team2.entrySet()){
+            sb.append(e.getKey()).append("-").append(e.getValue()).append("\n");
+        }
         this.addLog(sb.toString());
     }
     
@@ -538,6 +552,14 @@ class Game{
 
     public int getResult(){
         return this.result;
+    }
+
+    public void setTimeEnded(boolean b){
+        this.timeEnded = b;
+    }
+
+    public boolean getTimeEnded(){
+        return this.timeEnded;
     }
 
     //simulate a game

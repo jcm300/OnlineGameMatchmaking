@@ -13,5 +13,4 @@ Marks:
 "$c" + username + ";" + password + ";" + email + "c$" ------->  user creation(MessageType == 2)
 "$j" + username + "j$" ------->  join queue (MessageType == 3)
 "$d" + username + "d$" -------> deauthenticate (MessageType == 4)
-$qq$ ------> (MessageType == 5)
 other cenario ------> (MessageType == 0)
