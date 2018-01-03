@@ -22,6 +22,7 @@ import java.util.TimerTask;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 class Server{
     private int prt; //port server
@@ -33,17 +34,20 @@ class Server{
             ServerSocket sSkt = new ServerSocket(mSrv.prt);
             sSkt.setSoTimeout(10000);
             boolean close=false;
-            List<Socket> sktList=new ArrayList<>();
+            AtomicInteger activeCli= new AtomicInteger(0);
             while(!close){
                 try{
                     Socket skt = sSkt.accept();
+                    activeCli.incrementAndGet();
+                    
                     //create and run a thread for each client
-                    Thread wrk = new Thread(new Worker(skt,mSrv.gdt));
+                    Thread wrk = new Thread(new Worker(skt,mSrv.gdt,activeCli));
                     wrk.start();
-                    sktList.add(skt);
-                    sktList=sktList.stream().filter(a ->!a.isClosed()).collect(Collectors.toList()); //check if there are still open sockets
-                }catch(SocketTimeoutException e){};
-                close=sktList.size()==0;
+
+                }catch(SocketTimeoutException e){
+                    System.out.println(activeCli.get());
+                    close=activeCli.get()==0;
+                }   
             }
             sSkt.close();
             ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File("state")));
@@ -71,7 +75,7 @@ class Server{
 //class that saves all information for the server
 class GameData implements Serializable{
     private Map<String,User> users;
-    private transient WaitQueue wQueue;
+    private WaitQueue wQueue;
     private Map<String,Hero> heros;
 
     public GameData(){
@@ -164,9 +168,10 @@ class Worker implements Runnable{
     private BufferedReader in; //input from the client
     private PrintWriter out; //output to the client
     private String username; //atual username(null if none)
+    private AtomicInteger activeCli; //total no of active clients
     
     //create and initiate a Worker
-    public Worker(Socket skt, GameData gdt){
+    public Worker(Socket skt, GameData gdt,AtomicInteger active){
         this.skt = skt;
         this.gdt = gdt;
         this.username = null;
@@ -177,6 +182,7 @@ class Worker implements Runnable{
         }catch(Exception e){
             e.printStackTrace();
         }
+        this.activeCli=active;
     }
     
     //finds what type of message was sent from client
@@ -197,9 +203,6 @@ class Worker implements Runnable{
                             break;
                     case 'd': //deauthenticate
                             ret=4;
-                            break;
-                    case 'q': //quit
-                            ret=5;
                             break;
                     default:
                             break;
@@ -251,14 +254,6 @@ class Worker implements Runnable{
             }else if(type==4 && aux.length==1){
                 this.gdt.setAuth(aux[0],false);
                 this.username=null;
-            }else if(type==5){
-                try{
-                    this.skt.shutdownInput();
-                    this.skt.shutdownOutput();
-                    this.skt.close();
-                }catch(Exception e){
-                    e.printStackTrace();
-                }
             }
         }   
     }
@@ -276,13 +271,15 @@ class Worker implements Runnable{
                 if(message.charAt(0)=='/'){
                     if(message.startsWith("pick ",1)){
                         message = message.substring(6,message.length());
-                        if(this.gdt.heroExists(message))
+                        if(this.gdt.heroExists(message)){
                             curG.heroPick(uName,message);
-                        if(curG.allPicked() && !curG.getReady()){
-                            curG.stopTimer();
-                            curG.ready();
+                            curG.addLog(message + " picked on " + myTeam);
+                            if(curG.allPicked() && !curG.getReady()){
+                                curG.stopTimer();
+                                curG.ready();
+                            }       
                         }
-                    }
+                    }   
                 }else curG.addLog(message);
             }
             this.out.println("Gstart"); //stop play zone in client
@@ -309,6 +306,7 @@ class Worker implements Runnable{
                 this.skt.shutdownOutput();
                 this.skt.close();
             }
+            this.activeCli.decrementAndGet();
             System.out.println("Connection Closed");
         }catch(Exception e){
             e.printStackTrace();
@@ -332,12 +330,12 @@ class Listener implements Runnable{
 }
 
 
-class WaitQueue{
+class WaitQueue implements Serializable{
     private int[] rankQueue;
     private ReentrantLock rlock;
     private Condition[] condLock;
     private int gameNo;                 //records no of games that have been played/started
-    private Game nextGame;              //holds the next game being held
+    private transient Game nextGame;              //holds the next game being held
 
     public WaitQueue(){
         this.rankQueue = new int[10];
@@ -431,16 +429,16 @@ class Game{
             synchronized(this){
                 if(this.team1.size() < 5 && this.rankTeam1<this.rankTeam2){
                     this.team1.put(uName,"");
-                    this.rankTeam1 = this.rankTeam1 + rank;
+                    this.rankTeam1 = this.rankTeam1 + rank + 1;
                     r=1;
                 }
                 else{ 
                     this.team2.put(uName,"");
-                    this.rankTeam2 = this.rankTeam2 + rank;
+                    this.rankTeam2 = this.rankTeam2 + rank + 1;
                     r=2;
                 }
-                if(this.team2.size()<5) wait();
-                else{ 
+                if(this.team1.size()<5 || this.team2.size()<5) wait();
+                else{
                     notifyAll();
                     this.timer = new Timer();
                     this.timer.schedule(new ttask(this),30000); //start timer, now players have 30 seconds to pick hero

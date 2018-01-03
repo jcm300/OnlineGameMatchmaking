@@ -174,19 +174,24 @@ public class Client{
     }
 
     public void playMenu(Scanner s){
-        System.out.println("Play Menu:");
         int c=-1;
-        while(c!=0 && c!=1){
-            System.out.println("1: Join to a room");
-            System.out.println("0: Go back");
-            try{
-                c = s.nextInt();
-            }catch(Exception e){
-                c = -1;
-                s.next();
+        while(c==-1){
+            while(c!=0 && c!=1){
+                System.out.println("Play Menu:");
+                System.out.println("1: Join to a room");
+                System.out.println("0: Go back");
+                try{
+                    c = s.nextInt();
+                }catch(Exception e){
+                    c = -1;
+                    s.next();
+                }
             }
-        }
-        if(c==1) this.joinGame();
+            if(c==1){
+                this.joinGame();
+                c=-1;
+            }
+        }   
     }
 
     public void interfaceCli(){
@@ -198,7 +203,6 @@ public class Client{
         
             switch(choice){
                 case 0:
-                    this.out.println("$qq$");
                     break;
                 case 1:
                     this.registrationMenu(s);
