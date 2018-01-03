@@ -487,7 +487,7 @@ class Game{
         if(this.team1.containsKey(uName)) team = 0;
         else team = 1;
         
-        this.teamLock[1].lock();
+        this.teamLock[team].lock();
         switch(team){
             case 0:
                 if((success=!this.team1.containsValue(choice))) //check if the hero has been chosen   

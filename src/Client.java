@@ -244,9 +244,9 @@ class responseClient implements Runnable {
 
     public void run(){
         String current;
-        Scanner s = new Scanner(System.in);
+        BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
         try{
-            while((current = s.next())!=null && !stop){
+            while((current = in.readLine())!=null && !stop){
                 this.out.println(current);
             }
         }catch(Exception e){
