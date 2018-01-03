@@ -147,6 +147,14 @@ class GameData implements Serializable{
     public Hero getHero(String hero){
         return this.heros.get(hero);
     }
+
+    public void setAuth(String username, boolean b){
+        this.users.get(username).setAuth(b);
+    }
+
+    public boolean isAuth(String username){
+        return this.users.get(username).getAuth();
+    }
 }
 
 //Worker which represents one client on the server
@@ -155,11 +163,13 @@ class Worker implements Runnable{
     private GameData gdt; //all data users
     private BufferedReader in; //input from the client
     private PrintWriter out; //output to the client
+    private String username; //atual username(null if none)
     
     //create and initiate a Worker
     public Worker(Socket skt, GameData gdt){
         this.skt = skt;
         this.gdt = gdt;
+        this.username = null;
         try{
             //open input and output
             this.in = new BufferedReader(new InputStreamReader(this.skt.getInputStream()));
@@ -185,6 +195,9 @@ class Worker implements Runnable{
                     case 'j': //join
                             ret=3;
                             break;
+                    case 'd': //deauthenticate
+                            ret=4;
+                            break;
                     default:
                             break;
                 }
@@ -201,15 +214,22 @@ class Worker implements Runnable{
             //splits the message on its components
             String[] aux = s.split(";");
             if(type==1 && aux.length==2){
-                if(gdt.passwordMatch(aux[0],aux[1])){
-                    this.out.println("Authenticated"); 
-                    System.out.println("Authenticated");
+                if(this.gdt.passwordMatch(aux[0],aux[1])){
+                    if(this.gdt.isAuth(aux[0])){
+                        this.out.println("AlreadyAuthenticated");
+                        System.out.println("AlreadyAuthenticated");
+                    }else{
+                        this.gdt.setAuth(aux[0],true);
+                        this.username = aux[0];
+                        this.out.println("Authenticated"); 
+                        System.out.println("Authenticated");
+                    }   
                 }else{
                     this.out.println("NotAuth");
                     System.out.println("NotAuth");
                 }
             }else if(type==2 && aux.length==3){
-                if(gdt.addUser(aux[0],aux[1],aux[2])){
+                if(this.gdt.addUser(aux[0],aux[1],aux[2])){
                     this.out.println("UCreated");
                     System.out.println("UCreated");
                 }else{
@@ -225,6 +245,9 @@ class Worker implements Runnable{
                     this.out.println("UQNotJoin");
                     System.out.println("UQNotJoin");
                 }
+            }else if(type==4 && aux.length==1){
+                this.gdt.setAuth(aux[0],false);
+                this.username=null;
             }
         }   
     }
@@ -266,8 +289,9 @@ class Worker implements Runnable{
             //read messages from client
             while((inS = this.in.readLine()) != null){
                 this.parseLine(inS);
-            }       
+            } 
             
+            if(this.username!=null) this.gdt.setAuth(this.username,false);
             //safely close IO streams
             this.skt.shutdownInput();
             this.skt.shutdownOutput();

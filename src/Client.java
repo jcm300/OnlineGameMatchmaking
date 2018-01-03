@@ -42,6 +42,9 @@ public class Client{
             }else if(current.equals("NotAuth")){
                 this.isAuth=false;
                 System.out.println("Wrong credentials");
+            }else if(current.equals("AlreadyAuthenticated")){
+                this.isAuth=false;
+                System.out.println("Already Authenticated");
             }
         }   
     }
@@ -67,7 +70,11 @@ public class Client{
         }catch(Exception e){
             e.printStackTrace();
         }
-    }    
+    }
+
+    private void deauthenticate(){
+        this.out.println("$d" + this.username + "d$");
+    }
 
     public void joinGame(){
         if(this.isAuth){
@@ -201,6 +208,7 @@ public class Client{
                     if(this.isAuth){
                         this.playMenu(s);
                         this.isAuth = false;
+                        this.deauthenticate();
                     }
                     choice = -1;
                     break;

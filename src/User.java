@@ -5,12 +5,14 @@ public class User implements Serializable{
     private String email;
     private String password;
     private int rank;
-    
+    private boolean isAuth;
+
     public User(String name, String uEmail, String pass){
         this.uName=name;
         this.email=uEmail;
         this.password=pass;
         this.rank=0;
+        this.isAuth=false;
     }
     
     public void updateRank(int r){
@@ -29,5 +31,13 @@ public class User implements Serializable{
 
     public User clone(){
         return new User(this.uName,this.email,this.password);
+    }
+
+    public boolean getAuth(){
+        return this.isAuth;
+    }
+
+    public void setAuth(boolean b){
+        this.isAuth=b;
     }
 }
