@@ -1,3 +1,4 @@
+sudo: false
 language: java
 compiler:
     - javac
@@ -6,4 +7,4 @@ jdk:
 before_script:
     - cd src
 script:
-    - javac Client.java Hero.java Server.java state User.java
+    - javac Client.java Hero.java Server.java User.java
