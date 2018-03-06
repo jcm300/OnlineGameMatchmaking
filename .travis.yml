@@ -6,4 +6,4 @@ jdk:
 before_script:
     - cd src
 script:
-    - javac .*
+    - javac *
