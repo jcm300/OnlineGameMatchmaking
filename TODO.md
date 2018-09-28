@@ -1,20 +1,22 @@
-# General
+# TODO
+
+## Features
+
+### General
 - [ ] Set ; and $ as forbidden characters for usernames and passwords
 
+### Urgent
 
-# Urgent
+### Client
 
-
-# Client
-
-
-# Server
+### Server
 - [x] User creation
 - [x] User auth
 
 
-# User
-- [ ] 
+## FIX
 
 
-# Hero
+
+## Documentation/Usage
+- [ ] Gradle build file

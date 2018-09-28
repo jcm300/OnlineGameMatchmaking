@@ -1,6 +1,7 @@
 # OnlineGameMatchmaking
 
-OnlineGameMatchmaking is a system that emulates the inner-workings of online game systems such as Implementation of a Matchmaking System for an Online Game. The project should follow a [Client-Server Model](https://en.wikipedia.org/wiki/Client%E2%80%93server_model) where Server-Client communicatoins should be made via TCP sockets.
+OnlineGameMatchmaking is a system that emulates the inner-workings of online multiplayer game match-making systems. The system follows a [Client-Server Model](https://en.wikipedia.org/wiki/Client%E2%80%93server_model) where Server-Client communications are made via TCP sockets.
+Developed in the context of the Distributed Systems course at Minho University
 
 The Matchmaking System should allow:
 
@@ -19,8 +20,7 @@ The Matchmaking System should allow:
     * If a match successfuly starts it's result is randomly generated and the players W/L values are updated accordingly
           
 
-We will not implement the game, but only the matchmaking, so the score of the games will be randomly generated and used to update the user ranks.
-Developed in the context of the Distributed Systems course at Minho University
+**Note:** only the matchmaking functionality is implemented, not the game itself, the outcome of the matches is randomly generated and used to update user ranks.
 
 ## Setup
 ### Dependencies
