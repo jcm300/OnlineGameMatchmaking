@@ -1,7 +1,6 @@
 # OnlineGameMatchmaking
-[![Build Status](https://travis-ci.org/jcm300/OnlineGameMatchmaking.svg?branch=master)](https://travis-ci.org/jcm300/OnlineGameMatchmaking)
 
-Implementation of a Matchmaking System for an Online Game. The project should follow a [Client-Server Model](https://en.wikipedia.org/wiki/Client%E2%80%93server_model) where Server-Client communicatoins should be made via TCP sockets.
+OnlineGameMatchmaking is a system that emulates the inner-workings of online game systems such as Implementation of a Matchmaking System for an Online Game. The project should follow a [Client-Server Model](https://en.wikipedia.org/wiki/Client%E2%80%93server_model) where Server-Client communicatoins should be made via TCP sockets.
 
 The Matchmaking System should allow:
 
@@ -22,3 +21,12 @@ The Matchmaking System should allow:
 
 We will not implement the game, but only the matchmaking, so the score of the games will be randomly generated and used to update the user ranks.
 Developed in the context of the Distributed Systems course at Minho University
+
+## Setup
+### Dependencies
+
+## Build Status
+[![Build Status](https://travis-ci.org/jcm300/OnlineGameMatchmaking.svg?branch=master)](https://travis-ci.org/jcm300/OnlineGameMatchmaking)
+
+## License
+Licensed under the MIT License, see [LICENSE.md](LICENSE) for more details.
