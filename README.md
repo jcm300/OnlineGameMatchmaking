@@ -24,6 +24,7 @@ The Matchmaking System should allow:
 
 ## Setup
 ### Dependencies
+- [JDK8(Java development Kit)](https://www.oracle.com/technetwork/java/javase/downloads/index.html)
 
 ## Build Status
 [![Build Status](https://travis-ci.org/jcm300/OnlineGameMatchmaking.svg?branch=master)](https://travis-ci.org/jcm300/OnlineGameMatchmaking)

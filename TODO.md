@@ -1,6 +1,7 @@
 # TODO
 
 ## Features
+- [ ] interface implementation
 
 ### General
 - [ ] Set ; and $ as forbidden characters for usernames and passwords
@@ -15,7 +16,8 @@
 
 
 ## FIX
-
+- [ ] balanced distribution of players by teams
+- [ ] separated lock's for each team while players are choosing heroes
 
 
 ## Documentation/Usage
